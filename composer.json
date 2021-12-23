@@ -1,0 +1,49 @@
+{
+    "name": "bjitgroup/payment-laravel",
+    "description": "BJIT Payment System - Maintain Possiable Payment System",
+    "keywords": ["bjit", "bjitgroup", "payment system", "bjit payment", "crossdomain", "api"],
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Abdul Halim",
+            "email": "abdul.halim@bjitgroup.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Bjit\\Payment\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Bjit\\Payment\\Tests\\": "tests/",
+            "Database\\Factories\\": "database/factories"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        },
+        "laravel": {
+            "providers": [
+                "Bjit\\Payment\\PaymentServiceProvider"
+            ] 
+        }, 
+        "aliases": {
+            "Payment": "Bjit\\Payment\\Facades\\Payment"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-f": "vendor/bin/phpunit --filter"
+    }, 
+    "minimum-stability": "dev",
+    "require-dev": {
+        "orchestra/testbench": "^6.0",
+        "phpunit/phpunit": "9.5.x-dev"
+    },
+    "require": {
+        "stripe/stripe-php": "^7.107"
+    }
+}
