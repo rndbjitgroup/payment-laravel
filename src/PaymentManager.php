@@ -2,6 +2,8 @@
 
 namespace Bjit\Payment;
 
+use Bjit\Payment\Gateways\PayjpGateway;
+use Bjit\Payment\Gateways\PaypayGateway;
 use Bjit\Payment\Gateways\StripeGateway;
 use Illuminate\Support\Arr;
 use Bjit\Payment\Manager;
@@ -24,16 +26,44 @@ class PaymentManager extends Manager implements Contracts\Factory
     /**
      * Create an instance of the specified gateway.
      *
-     * @return \Laravel\Socialite\Two\AbstractProvider
+     * @return \Bjit\Payment\Gateways\AbstractGateway
      */
     protected function createStripeGateway()
     {
         $config = $this->config->get('payments.stripe');
-
+          
         return $this->buildGateway(
             StripeGateway::class, $config
         );
     }  
+
+    /**
+     * Create an instance of the specified gateway.
+     *
+     * @return \Bjit\Payment\Gateways\AbstractGateway
+     */
+    protected function createPayjpGateway()
+    {
+        $config = $this->config->get('payments.payjp');
+        
+        return $this->buildGateway(
+            PayjpGateway::class, $config
+        );
+    }
+
+    /**
+     * Create an instance of the specified gateway.
+     *
+     * @return \Bjit\Payment\Gateways\AbstractGateway
+     */
+    protected function createPaypayGateway()
+    {
+        $config = $this->config->get('payments.paypay');
+        
+        return $this->buildGateway(
+            PaypayGateway::class, $config
+        );
+    }
    
 
     /**
@@ -41,16 +71,16 @@ class PaymentManager extends Manager implements Contracts\Factory
      *
      * @param  string  $gateway
      * @param  array  $config
-     * @return \Laravel\Socialite\Two\AbstractGateway
+     * @return \Bjit\Payment\Gateways\AbstractGateway
      */
     public function buildGateway($gateway, $config)
-    {
+    {  
         return new $gateway(
             $this->container->make('request'), $config['key'],
-            $config['secret'], Arr::get($config, 'guzzle', [])
+            $config['secret'], Arr::except($config, ['key', 'secret']), 
+            Arr::get($config, 'guzzle', [])
         );
-    } 
- 
+    }  
 
     /**
      * Forget all of the resolved gateway instances.

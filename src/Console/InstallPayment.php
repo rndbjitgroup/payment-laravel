@@ -20,6 +20,11 @@ class InstallPayment extends Command
             '--tag' => "config"
         ]);
 
+        $this->call('vendor:publish', [
+            '--provider' => "Bjit\Payment\PaymentServiceProvider",
+            '--tag' => "migrations"
+        ]);
+
         $this->info('Installed Payment Package');
     }
 

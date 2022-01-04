@@ -8,7 +8,7 @@ use Bjit\Payment\Contracts\Factory;
 /**
  * @method static Bjit\Payment\Contracts\Gateway gateway(string $gateway = null)
  *
- * @see Bjit\Payment\SocialiteManager
+ * @see Bjit\Payment\PaymentManager
  */
 class Payment extends Facade
 {

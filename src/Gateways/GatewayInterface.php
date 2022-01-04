@@ -8,11 +8,13 @@ interface GatewayInterface
      * Format Payment data for the gateway.
      * 
      */
-    public function formatPaymentData($options);
+    public function formatPaymentInput($options);
+
+    public function formatPaymentResponse($response);
 
     /**
      * Format Checkout data for the gateway.
      * 
      */
-    public function formatCheckoutData($options);
+    //public function formatCheckoutData($options);
 }

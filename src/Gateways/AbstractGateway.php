@@ -31,6 +31,13 @@ abstract class AbstractGateway implements GatewayContract
      * @var string
      */
     protected $secret;
+
+    /**
+     * The additional config.
+     *
+     * @var array
+     */
+    protected $additionalConfig;
  
 
     /**
@@ -59,12 +66,13 @@ abstract class AbstractGateway implements GatewayContract
      * @param  array  $guzzle
      * @return void
      */
-    public function __construct(Request $request, $key, $secret, $guzzle = [])
+    public function __construct(Request $request, $key, $secret, $additionalConfig = [], $guzzle = [])
     {
         $this->guzzle = $guzzle;
         $this->request = $request;
         $this->key = $key; 
         $this->secret = $secret;
+        $this->additionalConfig = $additionalConfig;
     }
 
     /**
@@ -94,15 +102,15 @@ abstract class AbstractGateway implements GatewayContract
 
     abstract protected function cancelPayment($paymentId, $options);
 
-    abstract protected function createCheckout($options);
+    // abstract protected function createCheckout($options);
 
-    abstract protected function expireCheckout($csId, $options);
+    // abstract protected function expireCheckout($csId, $options);
 
-    abstract protected function retrieveCheckout($csId, $options);
+    // abstract protected function retrieveCheckout($csId, $options);
 
-    abstract protected function allCheckouts($options);
+    // abstract protected function allCheckouts($options);
 
-    abstract protected function allCheckoutLineItems($csId, $options);
+    // abstract protected function allCheckoutLineItems($csId, $options);
 
     abstract protected function refundPayment($options);
 

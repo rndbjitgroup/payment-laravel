@@ -22,7 +22,7 @@ class PaymentServiceProvider extends ServiceProvider implements DeferrableProvid
     { 
         $this->registerResources();
         
-        $this->app->singleton(Factory::class, function ($app) {
+        $this->app->singleton(Factory::class, function ($app) { 
             return new PaymentManager($app);
         });
     }
@@ -39,25 +39,40 @@ class PaymentServiceProvider extends ServiceProvider implements DeferrableProvid
 
     public function boot()
     { 
-        //dd('test boot');
+
         if ($this->app->runningInConsole()) {
 
             $this->publishes([
                 __DIR__ . '/../config/config.php' => config_path('payments.php')
             ], 'config');
 
+            if (! class_exists('CreatePaymentsTable')) {
+                $this->publishes([
+                    __DIR__.'/../database/migrations/create_payments_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_payments_table.php'),
+                ], 'migrations');
+            }
+
+            if (! class_exists('CreateRefundsTable')) {
+                $this->publishes([
+                    __DIR__.'/../database/migrations/create_refunds_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_refunds_table.php'),
+                ], 'migrations');
+            }
+
             $this->commands([
                 InstallPayment::class
             ]);
+
         }
 
-        Artisan::call('bjit-payment:install');
+        if ( ! File::exists(config_path('payments.php'))) {
+            Artisan::call('bjit-payment:install');
+        }
         
     } 
 
     private function registerResources()
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'payments');
-    }
+    } 
 
 }
