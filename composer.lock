@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6fa4322914c4203fbbc600bed36fe2d1",
+    "content-hash": "da0be24c2f3f18a572a9bd6d48066568",
     "packages": [
         {
             "name": "firebase/php-jwt",
@@ -449,31 +449,30 @@
         },
         {
             "name": "paypayopa/php-sdk",
-            "version": "dev-master",
+            "version": "1.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/paypay/paypayopa-sdk-php.git",
-                "reference": "f256e10e1e5561f2bac611356bb123ac7faf3114"
+                "reference": "bea1bb11ad7b19d4ca532bce23e437126ddc193d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/paypay/paypayopa-sdk-php/zipball/f256e10e1e5561f2bac611356bb123ac7faf3114",
-                "reference": "f256e10e1e5561f2bac611356bb123ac7faf3114",
+                "url": "https://api.github.com/repos/paypay/paypayopa-sdk-php/zipball/bea1bb11ad7b19d4ca532bce23e437126ddc193d",
+                "reference": "bea1bb11ad7b19d4ca532bce23e437126ddc193d",
                 "shasum": ""
             },
             "require": {
                 "ext-json": "*",
-                "firebase/php-jwt": "^5.5",
+                "firebase/php-jwt": "^5.2",
                 "guzzlehttp/guzzle": "^6.0 || ^7.0",
                 "php": ">=7.0.0"
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^2.16 || ^3.0",
                 "php-coveralls/php-coveralls": "^2.2",
-                "phpstan/phpstan": "^0.12.33 || ^1.0.0",
+                "phpstan/phpstan": "^0.12.33",
                 "phpunit/phpunit": "^9"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "classmap": [
@@ -508,9 +507,9 @@
             ],
             "support": {
                 "issues": "https://github.com/paypay/paypayopa-sdk-php/issues",
-                "source": "https://github.com/paypay/paypayopa-sdk-php/tree/2.0.2"
+                "source": "https://github.com/paypay/paypayopa-sdk-php/tree/1.0.5"
             },
-            "time": "2021-12-17T18:15:57+00:00"
+            "time": "2021-10-12T09:05:24+00:00"
         },
         {
             "name": "psr/http-client",
@@ -8251,7 +8250,6 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "paypayopa/php-sdk": 20,
         "phpunit/phpunit": 20
     },
     "prefer-stable": false,

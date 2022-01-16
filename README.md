@@ -19,8 +19,7 @@ BJIT Payment System uses a number of open source projects to work properly:
 
 - [Laravel](https://laravel.com/docs/8.x) - Laravel 8.x for the package!
 
-And of course Dillinger itself is open source with a [public repository][dill]
- on GitHub.
+ 
 
 ## Installation
 
@@ -48,6 +47,7 @@ php artisan serve
 ##### Create Payment 
 
 ```sh
+use Bjit\Payment\Facades\Payment;
 Payment::gateway($request->gateway)->createPayment([
     "amount" => $request->amount,
     "currency" => $request->currency ?? env('PAYMENT_CURRENCY'),
@@ -55,13 +55,39 @@ Payment::gateway($request->gateway)->createPayment([
     "description" => $request->description
 ]);
 ```
-**gateway is stipe/payjp/paypal/...**
-##### Retrieve Payment 
+_**gateway**  is stipe/payjp/paypal/..._
+
+##### Retrieve Payment  
+
 ```sh
+use Bjit\Payment\Facades\Payment;
 Payment::gateway($request->gateway)->retrievePayment($request->paymentId)
 ```
 
+##### Create Checkout 
+**Not Supported Payment Gateway:** _PayJP_
+```sh
+use Bjit\Payment\Facades\Payment;
+Payment::gateway($request->gateway)->createCheckout([ 
+    'payment_method_types' => $request->paymentMethodTypes,
+    'order_items' => $request->orderItems, 
+    'mode' => $request->payment_mode,
+    'payment_intent_data' => [
+        'capture_method' => 'automatic', // automatic/manual
+    ],
+    'success_url' => route($request->gateway . '.success'), 
+    'cancel_url' => route($request->gateway . '.cancel'),
+    'state' => sha1(md5(sha1(Auth::user()->id ?? rand(1111, 9999)))) // unique id
+]); 
+```
+
+##### Retrieve Checkout  
+**Not Supported Payment Gateway:** _PayJP_
+```sh
+use Bjit\Payment\Facades\Payment;
+Payment::gateway($request->gateway)->retrieveCheckout($request->paymentId)
+```
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT

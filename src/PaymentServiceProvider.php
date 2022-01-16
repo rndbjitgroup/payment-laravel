@@ -42,21 +42,9 @@ class PaymentServiceProvider extends ServiceProvider implements DeferrableProvid
 
         if ($this->app->runningInConsole()) {
 
-            $this->publishes([
-                __DIR__ . '/../config/config.php' => config_path('payments.php')
-            ], 'config');
+            $this->publishConfig();
 
-            if (! class_exists('CreatePaymentsTable')) {
-                $this->publishes([
-                    __DIR__.'/../database/migrations/create_payments_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_payments_table.php'),
-                ], 'migrations');
-            }
-
-            if (! class_exists('CreateRefundsTable')) {
-                $this->publishes([
-                    __DIR__.'/../database/migrations/create_refunds_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_refunds_table.php'),
-                ], 'migrations');
-            }
+            $this->publishMigrations();
 
             $this->commands([
                 InstallPayment::class
@@ -74,5 +62,34 @@ class PaymentServiceProvider extends ServiceProvider implements DeferrableProvid
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'payments');
     } 
+
+    private function publishConfig()
+    {
+        $this->publishes([
+            __DIR__ . '/../config/config.php' => config_path('payments.php')
+        ], 'config');
+    }
+
+    private function publishMigrations()
+    {
+        if (! class_exists('CreatePaymentsTable')) {
+            $this->publishes([
+                __DIR__.'/../database/migrations/create_payments_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_payments_table.php'),
+            ], 'migrations');
+        }
+
+        if (! class_exists('CreateRefundsTable')) {
+            $this->publishes([
+                __DIR__.'/../database/migrations/create_refunds_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_refunds_table.php'),
+            ], 'migrations');
+        }
+
+        if (! class_exists('CreateCustomersTable')) {
+            $this->publishes([
+                __DIR__.'/../database/migrations/create_customers_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_customers_table.php'),
+            ], 'migrations');
+        }
+
+    }
 
 }

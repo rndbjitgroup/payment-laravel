@@ -3,6 +3,7 @@
 namespace Bjit\Payment\Gateways;
 
 use Bjit\Payment\Enums\CmnEnum;
+use Bjit\Payment\Gateways\Interfaces\GatewayInterface;
 use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
@@ -44,7 +45,7 @@ class PaypayGateway extends AbstractGateway implements GatewayInterface
         ], $additionalConfig['is_live'] ); 
     } 
 
-    public function formatPaymentData($options)
+    public function formatPaymentInput($options)
     {
         return [
             'amount' => $options['amount'],
@@ -70,6 +71,11 @@ class PaypayGateway extends AbstractGateway implements GatewayInterface
            } 
         }
         return $orderItems;
+    }
+
+    public function formatPaymentResponse($response)
+    {
+        
     }
 
     public function accountLinkPayload()
