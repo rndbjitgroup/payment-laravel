@@ -1,8 +1,8 @@
 <?php
 
-namespace Bjit\Payment\Gateways;
+namespace Bjit\Payment\Gateways\Interfaces;
 
-interface GatewayInterface
+interface SubscriptionInterface
 {
     /**
      * Format Payment data for the gateway.

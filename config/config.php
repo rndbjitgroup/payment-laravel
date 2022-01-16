@@ -14,6 +14,11 @@ return [
     |
     */
  
+    'store' => [
+        'in-database' => 'automatic' // automatic/manual 
+        // automatic - store automatically by the package, 
+        // manual - handle it based on your application 
+    ],
 
     'stripe' => [
         'key' => env('STRIPE_KEY'),

@@ -100,7 +100,7 @@ abstract class AbstractGateway implements GatewayContract
 
     abstract protected function capturePayment($paymentId, $options); 
 
-    abstract protected function cancelPayment($paymentId, $options);
+    //abstract protected function cancelPayment($paymentId, $options);
 
     // abstract protected function createCheckout($options);
 
@@ -114,9 +114,9 @@ abstract class AbstractGateway implements GatewayContract
 
     abstract protected function refundPayment($options);
 
-    abstract protected function retrieveRefund($refundId, $options);
+    // abstract protected function retrieveRefund($refundId, $options);
 
-    abstract protected function updateRefund($refundId, $options);
+    // abstract protected function updateRefund($refundId, $options);
 
      
     /**

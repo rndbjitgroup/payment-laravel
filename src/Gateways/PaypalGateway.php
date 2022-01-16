@@ -2,6 +2,7 @@
 
 namespace Bjit\Payment\Gateways;
 
+use Bjit\Payment\Gateways\Interfaces\GatewayInterface;
 use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
@@ -34,7 +35,7 @@ class PaypalGateway extends AbstractGateway implements GatewayInterface
         $this->stripe = new StripeClient($secret);
     }
 
-    public function formatPaymentData($options)
+    public function formatPaymentInput($options)
     {
         return [
             'amount' => $options['amount'],
@@ -47,6 +48,11 @@ class PaypalGateway extends AbstractGateway implements GatewayInterface
     public function formatCheckoutData($options)
     {
         return $options;
+    }
+
+    public function formatPaymentResponse($response)
+    {
+        
     }
 
     public function createPayment($options)
