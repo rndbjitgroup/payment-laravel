@@ -72,21 +72,39 @@ class PaymentServiceProvider extends ServiceProvider implements DeferrableProvid
 
     private function publishMigrations()
     {
-        if (! class_exists('CreatePaymentsTable')) {
+        if (! class_exists('CreatePsPaymentsTable')) {
             $this->publishes([
-                __DIR__.'/../database/migrations/create_payments_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_payments_table.php'),
+                __DIR__.'/../database/migrations/create_payments_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_ps_payments_table.php'),
             ], 'migrations');
         }
 
-        if (! class_exists('CreateRefundsTable')) {
+        if (! class_exists('CreatePsRefundsTable')) {
             $this->publishes([
-                __DIR__.'/../database/migrations/create_refunds_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_refunds_table.php'),
+                __DIR__.'/../database/migrations/create_refunds_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_ps_refunds_table.php'),
             ], 'migrations');
         }
 
-        if (! class_exists('CreateCustomersTable')) {
+        if (! class_exists('CreatePsCustomersTable')) {
             $this->publishes([
-                __DIR__.'/../database/migrations/create_customers_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_customers_table.php'),
+                __DIR__.'/../database/migrations/create_customers_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_ps_customers_table.php'),
+            ], 'migrations');
+        }
+
+        if (! class_exists('CreatePsCardsTable')) {
+            $this->publishes([
+                __DIR__.'/../database/migrations/create_cards_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_ps_cards_table.php'),
+            ], 'migrations');
+        }
+
+        if (! class_exists('CreatePsPlansTable')) {
+            $this->publishes([
+                __DIR__.'/../database/migrations/create_plans_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_ps_plans_table.php'),
+            ], 'migrations');
+        }
+
+        if (! class_exists('CreatePsSubscriptionsTable')) {
+            $this->publishes([
+                __DIR__.'/../database/migrations/create_subscriptions_table.php.stub' => database_path('migrations/'.date('Y_m_d_His', time()) . '_create_ps_subscriptions_table.php'),
             ], 'migrations');
         }
 

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePaymentsTable extends Migration
+class CreatePsPaymentsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreatePaymentsTable extends Migration
      */
     public function up()
     {
-        Schema::create('payments', function (Blueprint $table) {
+        Schema::create('ps_payments', function (Blueprint $table) {
             $table->id();
             $table->string('state')->nullable();
             $table->enum('type', ['DirectPayment', 'CheckoutPayment']);
@@ -31,7 +31,7 @@ class CreatePaymentsTable extends Migration
             $table->string('description')->nullable();
             $table->string('payment_type')->nullable();
             $table->string('card_brand')->nullable();
-            $table->string('last_4_digit')->nullable();
+            $table->string('last_4_digit', 4)->nullable();
             $table->string('customer_name')->nullable();
             $table->string('customer_email')->nullable();
             $table->string('customer_phone')->nullable();

@@ -11,9 +11,12 @@ abstract class CmnEnum
     const TWO = 2;
     const THREE = 3;
 
-    const TABLE_PAYMENT_NAME = 'payments';
-    const TABLE_REFUND_NAME = 'refunds';
-    const TABLE_CUSTOMER_NAME = 'customers';
+    const TABLE_PAYMENT_NAME = 'ps_payments';
+    const TABLE_REFUND_NAME = 'ps_refunds';
+    const TABLE_CUSTOMER_NAME = 'ps_customers';
+    const TABLE_CARD_NAME = 'ps_cards';
+    const TABLE_PLAN_NAME = 'ps_plans';
+    const TABLE_SUBSCRIPTION_NAME = 'ps_subscriptions'; 
 
     
     const PT_DIRECT_PAYMENT = 'DirectPayment'; // PT => PAYMNET TYPE 
