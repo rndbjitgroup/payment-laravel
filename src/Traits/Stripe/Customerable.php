@@ -77,7 +77,7 @@ trait Customerable
 
     public function updateCustomer($customerId, $options = [])
     {
-        return $this->stripe->customers->update( $customerId, $options );
+        return $this->stripe->customers->update( $customerId, $this->formatCustomerInput( $options ) );
     }
 
     public function deleteCustomer($customerId, $options = [])
@@ -88,7 +88,7 @@ trait Customerable
             ->where('provider_customer_id', $customerId)
             ->delete();
         }
-        
+         
         return $this->stripe->customers->delete( $customerId, $options );
     } 
 

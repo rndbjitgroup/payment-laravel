@@ -5,6 +5,7 @@ namespace Bjit\Payment\Gateways;
 use Bjit\Payment\Gateways\Interfaces\CheckoutInterface;
 use Bjit\Payment\Gateways\Interfaces\CustomerInterface;
 use Bjit\Payment\Gateways\Interfaces\GatewayInterface;
+use Bjit\Payment\Traits\Stripe\Cardable;
 use Bjit\Payment\Traits\Stripe\Checkoutable;
 use Bjit\Payment\Traits\Stripe\Customerable;
 use Bjit\Payment\Traits\Stripe\Paymentable;
@@ -18,6 +19,7 @@ class StripeGateway extends AbstractGateway implements GatewayInterface, Checkou
     use Checkoutable;
     use Refundable;
     use Customerable;
+    use Cardable;
     
 
     /**

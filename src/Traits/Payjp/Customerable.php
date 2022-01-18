@@ -58,14 +58,18 @@ trait Customerable
     public function updateCustomer($customerId, $options = [])
     {
         $customer = Customer::retrieve( $customerId );
-        if(isset($options['email'])) {
-            $customer->email = $options['email'];
-        }
-        if(isset($options['description'])) {
-            $customer->description = $options['description'];
-        }
-        if(isset($options['metadata'])) {
-            $customer->metadata = $options['metadata'];
+        // if(isset($options['email'])) {
+        //     $customer->email = $options['email'];
+        // }
+        // if(isset($options['description'])) {
+        //     $customer->description = $options['description'];
+        // }
+        // if(isset($options['metadata'])) {
+        //     $customer->metadata = $options['metadata'];
+        // }
+        $updateInput = $this->formatCustomerInput($options);
+        foreach($updateInput as $key => $val) {
+            $customer->$key = $val;
         }
         $customer->save(); 
         return $this->formatCustomerResponse($customer);
