@@ -41,7 +41,7 @@ trait Cardable
     public function createCard($customerId, $options)
     {   
         $card = $this->stripe->customers->createSource($customerId, $this->formatCardInput( $options ) );
-        $this->storeCustomer($card);
+        $this->storeCard($card);
         return $this->formatCardResponse($card);
     }
 
@@ -85,8 +85,7 @@ trait Cardable
             'provider_card_id' => $response['id'],
             'customer_id' => null,
             'brand' => $response['brand'],
-            'country' => $response['country'], 
-            'customer' => $response['customer'],
+            'country' => $response['country'],  
             'exp_month' => $response['exp_month'],
             'exp_year' => $response['exp_year'],
             'last4' => $response['last4'],

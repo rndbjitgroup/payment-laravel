@@ -89,7 +89,7 @@ trait Cardable
             return true;
         }
 
-        return DB::table(CmnEnum::TABLE_CUSTOMER_NAME)->insert([
+        return DB::table(CmnEnum::TABLE_CARD_NAME)->insert([
             'provider' => CmnEnum::PROVIDER_PAYJP,
             'provider_customer_id' => $response['customer'],
             'provider_card_id' => $response['id'],

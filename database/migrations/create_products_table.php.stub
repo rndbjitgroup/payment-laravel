@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePsPlansTable extends Migration
+class CreatePsProductsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,16 +13,14 @@ class CreatePsPlansTable extends Migration
      */
     public function up()
     {
-        Schema::create('ps_plans', function (Blueprint $table) {
+        Schema::create('ps_products', function (Blueprint $table) {
             $table->id();  
             $table->string('provider')->nullable(); 
-            $table->string('provider_plan_id'); // stripe/paypal/payjp plan id
-            $table->string('provider_product_id')->nullable();
+            $table->string('provider_product_id'); // stripe/paypal/payjp product id 
             $table->string('name')->nullable();
-            $table->string('amount')->nullable(); 
-            $table->string('currency')->nullable();
-            $table->string('interval')->nullable();
-            $table->string('trial_days')->nullable();
+            $table->text('description')->nullable(); 
+            $table->json('metadata')->nullable(); 
+            $table->boolean('active')->nullable();
             $table->json('error_json')->nullable();
             $table->json('success_json')->nullable();
             $table->timestamps();
