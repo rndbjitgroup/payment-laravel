@@ -8,8 +8,11 @@ use Bjit\Payment\Gateways\Interfaces\GatewayInterface;
 use Bjit\Payment\Traits\Stripe\Cardable;
 use Bjit\Payment\Traits\Stripe\Checkoutable;
 use Bjit\Payment\Traits\Stripe\Customerable;
-use Bjit\Payment\Traits\Stripe\Paymentable;
+use Bjit\Payment\Traits\Stripe\Paymentable; 
+use Bjit\Payment\Traits\Stripe\Planable;
+use Bjit\Payment\Traits\Stripe\Productable;
 use Bjit\Payment\Traits\Stripe\Refundable;
+use Bjit\Payment\Traits\Stripe\Subscriptionable;
 use Illuminate\Http\Request;
 use Stripe\StripeClient;
 
@@ -20,6 +23,9 @@ class StripeGateway extends AbstractGateway implements GatewayInterface, Checkou
     use Refundable;
     use Customerable;
     use Cardable;
+    use Productable;
+    use Planable;
+    use Subscriptionable;
     
 
     /**

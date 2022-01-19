@@ -15,6 +15,7 @@ abstract class CmnEnum
     const TABLE_REFUND_NAME = 'ps_refunds';
     const TABLE_CUSTOMER_NAME = 'ps_customers';
     const TABLE_CARD_NAME = 'ps_cards';
+    const TABLE_PRODUCT_NAME = 'ps_products';
     const TABLE_PLAN_NAME = 'ps_plans';
     const TABLE_SUBSCRIPTION_NAME = 'ps_subscriptions'; 
 
