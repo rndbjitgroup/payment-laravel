@@ -66,7 +66,7 @@ trait Customerable
     public function createCustomer($options)
     {   
         $customer = $this->stripe->customers->create( $this->formatCustomerInput( $options ) );
-        $this->storeCustomer($customer);
+        $this->storeCustomerInDatabase($customer);
         return $this->formatCustomerResponse($customer);
     }
 
@@ -97,7 +97,7 @@ trait Customerable
         return $this->stripe->customers->all($options); 
     }
 
-    private function storeCustomer($response, $options = [], $customerType = null)
+    private function storeCustomerInDatabase($response, $options = [], $customerType = null)
     {  
         if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
             return true;

@@ -1,6 +1,6 @@
 <?php 
 
-namespace Bjit\Payment\Traits\Stripe;
+namespace Bjit\Payment\Traits\Paypal;
 
 use Bjit\Payment\Enums\CmnEnum;
 use Exception;
@@ -53,7 +53,7 @@ trait Refundable
     public function refundPayment($paymentId, $options = [])
     { 
         $response = $this->stripe->refunds->create($this->formatRefundInput($options, $paymentId));
-        $this->storeRefundInDatabase($response, $options, $paymentId);
+        $this->storeRefund($response, $options, $paymentId);
         return $this->formatRefundReponse($response);
     }
 
@@ -67,7 +67,7 @@ trait Refundable
         return $this->stripe->refunds->update( $refundId, $options );
     }
 
-    private function storeRefundInDatabase($response, $options, $providerPaymentId)
+    private function storeRefund($response, $options, $providerPaymentId)
     { 
         if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
             return true;

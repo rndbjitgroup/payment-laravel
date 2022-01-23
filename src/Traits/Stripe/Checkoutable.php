@@ -69,7 +69,7 @@ trait Checkoutable
     public function createCheckout($options)
     { 
         $response = $this->stripe->checkout->sessions->create($this->formatCheckoutInput($options)); 
-        $this->storePayment($response, $options, CmnEnum::PT_CHECKOUT_PAYMENT);
+        $this->storePaymentInDatabase($response, $options, CmnEnum::PT_CHECKOUT_PAYMENT);
         return $this->formatCheckoutResponse($response);
     }
 

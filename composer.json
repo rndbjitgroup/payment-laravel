@@ -47,6 +47,7 @@
     "require": {
         "stripe/stripe-php": "^7.107",
         "payjp/payjp-php": "~1.0",
-        "paypayopa/php-sdk": "^1.0.5"
+        "paypayopa/php-sdk": "^1.0.5",
+        "srmklive/paypal": "~3.0"
     }
 }

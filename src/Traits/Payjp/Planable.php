@@ -53,7 +53,7 @@ trait Planable
     public function createPlan($options)
     {   
         $plan = Plan::create( $this->formatPlanInput($options) );
-        $this->storePlan($plan);
+        $this->storePlanInDatabase($plan);
         return $this->formatPlanResponse($plan);
     }
 
@@ -91,7 +91,7 @@ trait Planable
         return Plan::all($options); 
     }
 
-    private function storePlan($response, $options = [], $customerType = null)
+    private function storePlanInDatabase($response, $options = [], $customerType = null)
     {  
         if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
             return true;

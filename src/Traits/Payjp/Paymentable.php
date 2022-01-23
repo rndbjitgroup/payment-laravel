@@ -55,7 +55,7 @@ trait Paymentable
     { 
         //dd($options, $this->formatPaymentInput($options));
         $response = Charge::create($this->formatPaymentInput($options)); 
-        $this->storePayment($response, $options, CmnEnum::PT_DIRECT_PAYMENT);
+        $this->storePaymentInDatabase($response, $options, CmnEnum::PT_DIRECT_PAYMENT);
         return $this->formatPaymentResponse($response);
     }
 
@@ -85,7 +85,7 @@ trait Paymentable
         return $ch->capture(); 
     }
 
-    private function storePayment($response, $options, $paymentType)
+    private function storePaymentInDatabase($response, $options, $paymentType)
     { 
         if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
             return true;
