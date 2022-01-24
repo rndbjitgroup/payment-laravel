@@ -56,7 +56,7 @@ trait Planable // IT IS PLACE RECOMMENDED BY STRIPE
     public function createPlan($options)
     {   
         $plan = $this->stripe->prices->create( $this->formatPlanInput( $options ) );
-        $this->storePlan($plan);
+        $this->storePlanInDatabase($plan);
         return $this->formatPlanResponse($plan);
     }
 
@@ -80,7 +80,7 @@ trait Planable // IT IS PLACE RECOMMENDED BY STRIPE
         return $this->stripe->prices->all($options);
     }
 
-    private function storePlan($response, $options = [], $cardType = null)
+    private function storePlanInDatabase($response, $options = [], $cardType = null)
     {  
         if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
             return true;

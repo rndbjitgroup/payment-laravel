@@ -32,6 +32,7 @@ abstract class CmnEnum
     const STATUS_COMPLETE = 'complete';
     const STATUS_OPEN = 'open';
     const STATUS_PENDING = 'pending';
+    const STATUS_PAYPAL_COMPLETED = 'COMPLETED';
 
     const PROVIDER_STRIPE = 'stripe';
     const PROVIDER_PAYJP = 'payjp';

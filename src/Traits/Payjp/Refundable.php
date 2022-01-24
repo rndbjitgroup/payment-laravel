@@ -48,13 +48,13 @@ trait Refundable
 
         $response = $ch->refund($this->formatRefundInput($options));
 
-        $this->storeRefund($response, $options, $paymentId);
+        $this->storeRefundInDatabase($response, $options, $paymentId);
         return $this->formatRefundReponse($response);
     } 
     
     
 
-    private function storeRefund($response, $options, $providerPaymentId)
+    private function storeRefundInDatabase($response, $options, $providerPaymentId)
     {
         if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
             return true;

@@ -41,7 +41,7 @@ trait Cardable
     public function createCard($customerId, $options)
     {   
         $card = $this->stripe->customers->createSource($customerId, $this->formatCardInput( $options ) );
-        $this->storeCard($card);
+        $this->storeCardInDatabase($card);
         return $this->formatCardResponse($card);
     }
 
@@ -73,7 +73,7 @@ trait Cardable
         return $this->stripe->customers->allSources($options); 
     }
 
-    private function storeCard($response, $options = [], $cardType = null)
+    private function storeCardInDatabase($response, $options = [], $cardType = null)
     {  
         if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
             return true;

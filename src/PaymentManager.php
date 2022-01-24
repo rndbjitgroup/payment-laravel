@@ -3,6 +3,7 @@
 namespace Bjit\Payment;
 
 use Bjit\Payment\Gateways\PayjpGateway;
+use Bjit\Payment\Gateways\PaypalGateway;
 use Bjit\Payment\Gateways\PaypayGateway;
 use Bjit\Payment\Gateways\StripeGateway;
 use Illuminate\Support\Arr;
@@ -48,6 +49,20 @@ class PaymentManager extends Manager implements Contracts\Factory
         
         return $this->buildGateway(
             PayjpGateway::class, $config
+        );
+    }
+
+    /**
+     * Create an instance of the specified gateway.
+     *
+     * @return \Bjit\Payment\Gateways\AbstractGateway
+     */
+    protected function createPaypalGateway()
+    {
+        $config = $this->config->get('payments.paypal');
+        
+        return $this->buildGateway(
+            PaypalGateway::class, $config
         );
     }
 
