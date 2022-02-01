@@ -23,8 +23,7 @@ class CreatePsCardsTable extends Migration
             $table->string('country')->nullable(); 
             $table->string('exp_month')->nullable();
             $table->string('exp_year')->nullable();
-            $table->string('last4', 4)->nullable();
-            $table->json('error_json')->nullable();
+            $table->string('last4', 4)->nullable(); 
             $table->json('success_json')->nullable();
             $table->timestamps();
             $table->softDeletes();

@@ -94,4 +94,28 @@ trait Cardable
             'updated_at' => now()
         ]);
     }
+
+    private function updateCardInDatabase($customerId, $cardId, $response, $options = [], $cardType = null)
+    {  
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_CARD_NAME)
+            ->where('provider', CmnEnum::PROVIDER_STRIPE)
+            ->where('provider_customer_id', $customerId)
+            ->where('provider_card_id', $cardId)
+            ->update([
+                'customer_id' => null,
+                'brand' => $response['brand'],
+                'country' => $response['country'],  
+                'exp_month' => $response['exp_month'],
+                'exp_year' => $response['exp_year'],
+                'last4' => $response['last4'],
+                'success_json' => json_encode($response),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+    }
+
 }

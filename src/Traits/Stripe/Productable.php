@@ -93,4 +93,24 @@ trait Productable // IT IS PLACE RECOMMENDED BY STRIPE
             'updated_at' => now()
         ]);
     }
+
+    private function updateProductInDatabase($productId, $response, $options = [])
+    {  
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_PRODUCT_NAME)
+            ->where('provider', CmnEnum::PROVIDER_STRIPE)
+            ->where('provider_Product_id', $productId)
+            ->update([ 
+                'name' => $response['name'] ?? null, 
+                'description' => $response['description'] ?? null, 
+                'metadata' => isset($response['metadata']) ? json_encode($response['metadata']) : null,  
+                'active' => $response['active'] ?? null,   
+                'success_json' => json_encode($response), 
+                'updated_at' => now()
+            ]);
+    }
+
 }

@@ -22,8 +22,7 @@ class CreatePsPlansTable extends Migration
             $table->string('amount')->nullable(); 
             $table->string('currency')->nullable();
             $table->string('interval')->nullable();
-            $table->string('trial_days')->nullable();
-            $table->json('error_json')->nullable();
+            $table->string('trial_days')->nullable(); 
             $table->json('success_json')->nullable();
             $table->timestamps();
             $table->softDeletes();

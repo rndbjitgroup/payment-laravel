@@ -121,8 +121,7 @@ trait Paymentable
                 'status' => $response['status'],
                 'generic_payment_status' => $response['status'] == CmnEnum::STATUS_PAYPAL_COMPLETED ? CmnEnum::PS_PAID : CmnEnum::PS_UNPAID,
                 'generic_status' => $response['status'] == CmnEnum::STATUS_PAYPAL_COMPLETED ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
-                'success_json' => json_encode($response),
-                'created_at' => now(),
+                'success_json' => json_encode($response), 
                 'updated_at' => now()
             ]);
     }

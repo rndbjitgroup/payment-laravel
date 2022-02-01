@@ -1,30 +1,35 @@
 <?php 
 
-namespace Bjit\Payment\Traits\Paypal;
+namespace Bjit\Payment\Traits\Paypay;
 
 use Bjit\Payment\Enums\CmnEnum;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use PayPay\OpenPaymentAPI\Models\RefundPaymentPayload;
 use RuntimeException;
 
 trait Refundable
 {
     public function formatRefundInput($options, $paymentId)
     {
-        $formatInput = [
-            'payment_id' => $paymentId
-        ];
+        $formatInput = [];
 
-        if (isset($options['invoice_id']) && !empty($options['invoice_id'])) {
-            $formatInput['invoice_id'] = $options['invoice_id'];
+        if(str_contains($paymentId, CmnEnum::STRIPE_PAYMENT_INTENT_PREFIX)) {
+            $formatInput = [
+                'payment_intent' => $paymentId
+            ];
+        } else {
+            $formatInput = [
+                'charge' => $paymentId
+           ];
         }
 
-        if (isset($options['amount']) && $options['amount'] >= CmnEnum::ONE) {
+        if(isset($options['amount']) && $options['amount'] >= CmnEnum::ONE) {
             $formatInput['amount'] = $options['amount'];
         }
 
-        if (isset($options['refund_reason'])) {
+        if(isset($options['refund_reason']) && in_array($options['refund_reason'], CmnEnum::REFUND_STRIPE_REASONS)) {
             $formatInput['reason'] = $options['refund_reason'];
         } 
 
@@ -47,22 +52,30 @@ trait Refundable
     }
 
     public function refundPayment($paymentId, $options = [])
-    { 
-        $formatedInput = $this->formatRefundInput($options, $paymentId);
-        $response = $this->paypal->refundCapturedPayment(
-            $formatedInput['payment_id'],
-            $formatedInput['invoice_id'] ?? 111,
-            $formatedInput['amount'] ?? null,
-            $formatedInput['reason'] ?? null,
-        );
-        dd($response);
-        $this->storeRefundInDatabase($response, $options, $paymentId);
-        return $this->formatRefundReponse($response);
+    {
+        $amount = [
+            "amount" => 1,
+            "currency" => "JPY"
+        ];
+
+        $rPPayload = new RefundPaymentPayload();
+        $rPPayload
+          ->setMerchantRefundId(uniqid('rf' . date('YmdHis')))
+          ->setPaymentId($paymentId)
+          ->setAmount($amount)
+          ->setRequestedAt(); 
+
+        return $this->paypay->refund->refundPayment($rPPayload);
     }
 
     public function retrieveRefund($refundId, $options = [])
     {
-        return $this->formatRefundReponse($this->paypal->showRefundDetails( $refundId ));
+        return $this->paypay->refunds->retrieve( $refundId, $options );
+    }
+
+    public function updateRefund($refundId, $options = [])
+    {
+        return $this->paypay->refunds->update( $refundId, $options );
     } 
 
     private function storeRefundInDatabase($response, $options, $providerPaymentId)
@@ -80,7 +93,7 @@ trait Refundable
             DB::table(CmnEnum::TABLE_REFUND_NAME)->insert([
                 //'state' => $options['state'], 
                 'payment_id' => $paymentId,
-                'provider' => CmnEnum::PROVIDER_STRIPE,
+                'provider' => CmnEnum::PROVIDER_PAYPAY,
                 'provider_refund_id' => $response['id'],
                 'user_id' => Auth::user()->id ?? CmnEnum::ONE,
                 'amount' => $this->getPaymentAmount($response['charge']),
@@ -121,8 +134,8 @@ trait Refundable
             $now = now();
 
             DB::table(CmnEnum::TABLE_REFUND_NAME)
-                ->where('provider', CmnEnum::PROVIDER_PAYPAL)
-                ->where('provider_refund_id', $refundId)
+                ->where('provider', CmnEnum::PROVIDER_PAYPAY)
+                ->where('provider_refund_id', $paymentId)
                 ->update([ 
                     'user_id' => Auth::user()->id ?? CmnEnum::ONE,
                     'amount' => $this->getPaymentAmount($response['charge']),

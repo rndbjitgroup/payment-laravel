@@ -92,4 +92,21 @@ trait Subscriptionable
         ]);
     }
 
+    private function updateSubscriptionInDatabase($subscriptionId, $response, $options = [], $cardType = null)
+    {  
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_SUBSCRIPTION_NAME)
+            ->where('provider', CmnEnum::PROVIDER_STRIPE)
+            ->where('provider_subscription_id', $subscriptionId)
+            ->update([ 
+                'provider_customer_id' => $response['customer'],
+                'provider_plan_id' => $response['plan']['id'] ?? null,  
+                'success_json' => json_encode($response), 
+                'updated_at' => now()
+            ]);
+    }
+
 }

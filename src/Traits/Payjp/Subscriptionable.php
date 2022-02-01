@@ -10,6 +10,25 @@ use Payjp\Subscription;
 
 trait Subscriptionable 
 {
+    public function formatSubscriptionListInput($options)
+    {
+        $input = [];
+
+        if (isset($options['limit'])) {
+            $input['limit'] = $options['limit'];
+        }
+
+        if (isset($options['offset'])) {
+            $input['offset'] = $options['offset'];
+        }
+
+        $extraInput = Arr::except($options, [
+            'limit', 'offset'
+        ]); 
+
+        return array_merge($input, $extraInput);
+    }
+
     public function formatSubscriptionInput($options)
     {
         $input = [];
@@ -30,6 +49,10 @@ trait Subscriptionable
 
     public function formatSubscriptionResponse($response)
     { 
+        if(isset($response['error'])) {
+            return $this->formatErrorResponse($response);
+        }
+        
         return [
             'provider' => CmnEnum::PROVIDER_PAYJP,
             'id' => $response['id'],
@@ -65,7 +88,7 @@ trait Subscriptionable
         //dd($updateInput, $subscription);
         $subscription->save(); 
 
-        $this->updateSubscriptionInDatabase($subscriptionId, $subscription);
+        $this->updateSubscriptionInDatabase($subscriptionId, $subscription, $options);
 
         return $this->formatSubscriptionResponse($subscription);
     }
@@ -91,16 +114,14 @@ trait Subscriptionable
     public function deleteSubscription($subscriptionId, $options = [])
     {
         $subscription = Subscription::retrieve( $subscriptionId );  
-        return $subscription->delete();
+        $response = $subscription->delete();
+        $this->deleteSubscriptionFromDatabase($subscriptionId, $options);
+        return $response;
     } 
 
-    public function allSubscriptions($subscriptionId, $options = [])
+    public function allSubscriptions($options = [])
     { 
-        $options = [
-            'limit' => $options['limit'],
-            'offset' => $options['offset']
-        ];
-        return Subscription::all($options); 
+        return Subscription::all($this->formatSubscriptionListInput($options)); 
     }
 
     private function storeSubscriptionInDatabase($response, $options = [], $customerType = null)
@@ -120,21 +141,31 @@ trait Subscriptionable
         ]);
     }
 
-    private function updateSubscriptionInDatabase($subscriptionId, $response)
+    private function updateSubscriptionInDatabase($subscriptionId, $response, $options = [])
     {
         if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
             return true;
         }
 
-        return DB::table(CmnEnum::TABLE_SUBSCRIPTION_NAME)->where('provider_subscription_id', $subscriptionId)->update([
-            'provider' => CmnEnum::PROVIDER_PAYJP, 
-            'provider_subscription_id' => $response['id'],
-            'provider_customer_id' => $response['customer'],
-            'provider_plan_id' => $response['plan']['id'] ?? null, 
-            'success_json' => json_encode($response),
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
+        return DB::table(CmnEnum::TABLE_SUBSCRIPTION_NAME)
+            ->where('provider', CmnEnum::PROVIDER_PAYJP)
+            ->where('provider_subscription_id', $subscriptionId)
+            ->update([ 
+                'provider_customer_id' => $response['customer'],
+                'provider_plan_id' => $response['plan']['id'] ?? null, 
+                'success_json' => json_encode($response), 
+                'updated_at' => now()
+            ]);
+    }
+
+    private function deleteSubscriptionFromDatabase($subscriptionId, $options = [])
+    {
+        if ( (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            DB::table(CmnEnum::TABLE_CUSTOMER_NAME)
+            ->where('provider', CmnEnum::PROVIDER_PAYJP)
+            ->where('provider_subscription_id', $subscriptionId)
+            ->update(['deleted_at' => now()]);
+        }
     }
     
 }

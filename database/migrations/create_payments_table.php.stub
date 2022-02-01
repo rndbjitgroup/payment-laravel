@@ -24,6 +24,7 @@ class CreatePsPaymentsTable extends Migration
             $table->bigInteger('order_id')->nullable();
             $table->double('amount', 8, 2);
             $table->string('currency', 5);
+            $table->boolean('captured')->nullable();
             $table->string('payment_status')->nullable();
             $table->string('status')->nullable();
             $table->string('generic_payment_status')->nullable();
@@ -34,8 +35,7 @@ class CreatePsPaymentsTable extends Migration
             $table->string('last_4_digit', 4)->nullable();
             $table->string('customer_name')->nullable();
             $table->string('customer_email')->nullable();
-            $table->string('customer_phone')->nullable();
-            $table->json('error_json')->nullable();
+            $table->string('customer_phone')->nullable(); 
             $table->json('success_json')->nullable();
             $table->timestamp('refunded_at')->nullable();
             $table->timestamp('canceled_at')->nullable();

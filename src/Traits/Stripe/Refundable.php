@@ -110,6 +110,47 @@ trait Refundable
         
     }
 
+    private function updateRefundInDatabase($refundId, $response, $options, $providerPaymentId)
+    { 
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $paymentId = $this->getPaymentIdByProviderPaymentId($providerPaymentId);
+            $now = now();
+
+            DB::table(CmnEnum::TABLE_REFUND_NAME)
+                ->where('provider', CmnEnum::PROVIDER_STRIPE)
+                ->where('provider_refund_id', $refundId)
+                ->update([ 
+                    'user_id' => Auth::user()->id ?? CmnEnum::ONE,
+                    'amount' => $this->getPaymentAmount($response['charge']),
+                    'amount_refunded' => $response['amount'],
+                    'currency' => $response['currency'],
+                    'status' => $response['status'],
+                    'generic_refund_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::RS_REFUNDED : CmnEnum::RS_NOT_REFUNDED, 
+                    'generic_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
+                    'refund_reason' => $response['reason'] ?? '',
+                    'success_json' => json_encode($response), 
+                    'updated_at' => $now
+                ]);
+
+            DB::table(CmnEnum::TABLE_PAYMENT_NAME)->where('id', $paymentId)->update([
+                'refunded_at' => $now
+            ]);
+
+            DB::commit();
+            return true;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new RuntimeException($e->getMessage()); 
+        }
+        
+    }
+
     private function getPaymentIdByProviderPaymentId($id)
     {
         return optional(
