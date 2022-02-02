@@ -3,12 +3,32 @@
 namespace Bjit\Payment\Traits\Payjp;
 
 use Bjit\Payment\Enums\CmnEnum;
+use Bjit\Payment\Helpers\CmnHelper;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Payjp\Customer;
 
 trait Cardable 
 {
+    public function formatCardListInput($options)
+    {
+        $input = [];
+
+        if (isset($options['limit'])) {
+            $input['limit'] = $options['limit'];
+        }
+
+        if (isset($options['offset'])) {
+            $input['offset'] = $options['offset'];
+        }
+
+        $extraInput = Arr::except($options, [
+            'limit', 'offset'
+        ]); 
+
+        return array_merge($input, $extraInput);
+    }
+
     public function formatCardInput($options)
     {
         $input = [];
@@ -26,6 +46,10 @@ trait Cardable
 
     public function formatCardResponse($response)
     { 
+        if(isset($response['error'])) {
+            return $this->formatErrorResponse($response);
+        }
+        
         return [
             'provider' => CmnEnum::PROVIDER_PAYJP,
             'id' => $response['id'],
@@ -63,7 +87,7 @@ trait Cardable
             $card->$key = $val;
         } 
         $card->save(); 
-
+        $this->updateCardInDatabase($customerId, $cardId, $options);
         return $this->formatCardResponse($card);
     }
 
@@ -71,16 +95,14 @@ trait Cardable
     {
         $customer = Customer::retrieve( $customerId ); 
         $card = $customer->cards->retrieve($cardId);
-        return $card->delete();
+        $response = $card->delete();
+        $this->deleteCardFromDatabase($customerId, $cardId, $options);
+        return $response;
     } 
 
     public function allCards($customerId, $options = [])
     { 
-        $options = [
-            'limit' => $options['limit'],
-            'offset' => $options['offset']
-        ];
-        return Customer::retrieve($customerId)->cards->all($options); 
+        return Customer::retrieve($customerId)->cards->all($this->formatCardListInput($options)); 
     }
 
     private function storeCardInDatabase($response, $options = [], $customerType = null)
@@ -100,9 +122,44 @@ trait Cardable
             'exp_month' => $response['exp_month'],
             'exp_year' => $response['exp_year'],
             'last4' => $response['last4'],
-            'success_json' => json_encode($response),
+            'success_json' => CmnHelper::jsonEncodePrivate($response),
             'created_at' => now(),
             'updated_at' => now()
         ]);
     }
+
+    private function updateCardInDatabase($customerId, $cardId, $response, $options = [])
+    {  
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_CARD_NAME)
+            ->where('provider', CmnEnum::PROVIDER_PAYJP)
+            ->where('provider_customer_id', $customerId)
+            ->where('provider_card_id', $cardId)
+            ->update([ 
+                'customer_id' => null,
+                'brand' => $response['brand'],
+                'country' => $response['country'], 
+                'customer' => $response['customer'],
+                'exp_month' => $response['exp_month'],
+                'exp_year' => $response['exp_year'],
+                'last4' => $response['last4'],
+                'success_json' => CmnHelper::jsonEncodePrivate($response), 
+                'updated_at' => now()
+            ]);
+    }
+
+    private function deleteCardFromDatabase($customerId, $cardId, $options)
+    {
+        if ( (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            DB::table(CmnEnum::TABLE_CUSTOMER_NAME)
+            ->where('provider', CmnEnum::PROVIDER_PAYJP)
+            ->where('provider_customer_id', $customerId)
+            ->where('provider_card_id', $cardId)
+            ->update(['deleted_at' => now()]);
+        }
+    }
+
 }

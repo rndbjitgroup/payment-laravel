@@ -82,14 +82,9 @@ trait Customerable
 
     public function deleteCustomer($customerId, $options = [])
     {
-        if ( (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
-            DB::table(CmnEnum::TABLE_CUSTOMER_NAME)
-            ->where('provider', CmnEnum::PROVIDER_STRIPE)
-            ->where('provider_customer_id', $customerId)
-            ->delete();
-        }
-         
-        return $this->stripe->customers->delete( $customerId, $options );
+        $response = $this->stripe->customers->delete( $customerId, $options );
+        $this->deleteCustomerFromDatabase($customerId, $options);
+        return $response;
     } 
 
     public function allCustomers($options = [])
@@ -113,4 +108,32 @@ trait Customerable
             'updated_at' => now()
         ]);
     }
+
+    private function updateCustomerInDatabase($customerId, $response, $options = [])
+    {  
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_CUSTOMER_NAME)
+            ->where('provider', CmnEnum::PROVIDER_STRIPE)
+            ->where('provider_customer_id', $customerId)
+            ->update([
+                'email' => $response['email'],
+                'description' => $response['description'], 
+                'success_json' => json_encode($response),
+                'updated_at' => now()
+            ]);
+    }
+
+    private function deleteCustomerFromDatabase($customerId, $options)
+    {
+        if ( (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            DB::table(CmnEnum::TABLE_CUSTOMER_NAME)
+            ->where('provider', CmnEnum::PROVIDER_STRIPE)
+            ->where('provider_customer_id', $customerId)
+            ->update(['deleted_at' => now()]);
+        }
+    }
+
 }

@@ -16,18 +16,17 @@ trait Checkoutable
         foreach($options['order_items'] as $item) 
         {
             $itemData = [ 
-                'name' => $item['name'], 
-                'unit_amount' => $item['price']['unit_amount'],
+                'name' => $item['name'],  
+                'unit_amount' => [
+                    "currency_code"=> $item['price']['currency'],
+                    "value"=> $item['price']['unit_amount']
+                ],
                 'quantity' => $item['quantity'],
                 'description' => $item['description']
-            ];
-
-            if(isset($item['price']['currency'])) {
-                $itemData['currency'] = $item['price']['currency'];
-            }
+            ]; 
 
             $extraData = Arr::except($item, [
-                'name', 'price', 'unit_amount', 'currency', 'quantity', 'description'
+                'name', 'price', 'currency', 'quantity', 'description'
             ]);
     
             $items[] = array_merge($itemData, $extraData); 
@@ -44,12 +43,22 @@ trait Checkoutable
                 "cancel_url" => $options['cancel_url'],
             ];
         }
-        if (isset($options['amount'])) {
+        if (isset($options['amount_total'])) {
             $data["purchase_units"] = [
                 [
                     "amount"=> [
                         "currency_code"=> $options['currency'],
-                        "value"=> $options['amount']
+                        "value"=> $options['amount_total'], // item_total + tax_total + shipping + handling + insurance - shipping_discount - discount
+                        "breakdown" => [
+                            "item_total" => [
+                                "currency_code"=> $options['currency'],
+                                "value"=> $options['item_total'],
+                            ],
+                            "tax_total" => (isset($options['tax_total']) && !empty($options['tax_total'])) ? [
+                                "currency_code"=> $options['currency'],
+                                "value"=> $options['tax_total'],
+                            ] : null,
+                        ]
                     ],
                     'description' => $options['description'] ?? null,
                     'items' => $items ?? null
@@ -58,10 +67,10 @@ trait Checkoutable
         }  
 
         $extraData = Arr::except($options, [
-            'intent', 'application_context', 'purchase_units', 'amount', 'currency', 'description', 'order_items', 'state'
+            'intent', 'application_context', 'purchase_units', 'amount_total', 'item_total', 'tax_total', 'currency', 'description', 'order_items', 'state'
         ]); 
         
-        return dd(array_merge($data, $extraData));
+        return array_merge($data, $extraData);
     }
 
     public function formatCheckoutResponse($response)

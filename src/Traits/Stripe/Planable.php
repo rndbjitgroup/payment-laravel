@@ -99,4 +99,25 @@ trait Planable // IT IS PLACE RECOMMENDED BY STRIPE
             'updated_at' => now()
         ]);
     }
+
+    private function updatePlanInDatabase($planId, $response, $options = [])
+    {  
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_PLAN_NAME)
+            ->where('provider', CmnEnum::PROVIDER_STRIPE)
+            ->where('provider_plan_id', $planId)
+            ->update([ 
+                'provider_product_id' => $response['product'] ?? null,
+                'name' => $response['nickname'] ?? null, 
+                'amount' => $response['unit_amount'] ?? null, 
+                'currency' => $response['currency'] ?? null, 
+                'interval' => $response['recurring']['interval'] ?? null,  
+                'success_json' => json_encode($response), 
+                'updated_at' => now()
+            ]);
+    }
+
 }

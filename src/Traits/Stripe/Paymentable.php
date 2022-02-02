@@ -3,6 +3,7 @@
 namespace Bjit\Payment\Traits\Stripe;
 
 use Bjit\Payment\Enums\CmnEnum;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -10,12 +11,22 @@ trait Paymentable
 {
     public function formatPaymentInput($options)
     {
-        return [
+        $input = [
             'amount' => $options['amount'],
             'currency' => $options['currency'],
             'source' => $options['nonce'] ?? null,
             'description' => $options['description']
         ];
+
+        if (isset($options['capture'])) {
+            $input['capture'] = $options['capture'];
+        }
+
+        $extraInput = Arr::except($options, [
+            'amount', 'currency', 'nonce', 'description', 'capture'
+        ]); 
+
+        return array_merge($input, $extraInput);
     }
 
     public function formatPaymentResponse($response)
@@ -105,4 +116,35 @@ trait Paymentable
             'updated_at' => now()
         ]);
     }
+
+    private function updatePaymentInDatabase($paymentId, $response, $options) 
+    {  
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_PAYMENT_NAME)
+            ->where('provider', CmnEnum::PROVIDER_STRIPE)
+            ->where('provider_payment_id', $paymentId)
+            ->update([  
+                'provider_payment_intent_id' => $response['payment_intent'] ?? null,
+                'user_id' => Auth::user()->id ?? CmnEnum::ONE,
+                'amount' => $response['amount_total'] ?? $response['amount'] ?? 0,
+                'currency' => $response['currency'],
+                'payment_status' => $response['paid'],
+                'status' => $response['status'],
+                'generic_payment_status' => $response['paid'] ? CmnEnum::PS_PAID : CmnEnum::PS_UNPAID,
+                'generic_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
+                'description' => $response['description'],
+                'payment_type' => $response['payment_method_details']['type'] ?? $response['payment_method_types'][CmnEnum::ZERO] ?? null,
+                'card_brand' => $response['payment_method_details']['card']['brand'] ?? null,
+                'last_4_digit' => $response['payment_method_details']['card']['last4'] ?? null,
+                'customer_name' => $response['customer_details']['name'] ?? null,
+                'customer_email' => $response['customer_details']['email'] ?? null,
+                'customer_phone' => $response['customer_details']['phone'] ?? null,
+                'success_json' => json_encode($response), 
+                'updated_at' => now()
+            ]);
+    }
+
 }

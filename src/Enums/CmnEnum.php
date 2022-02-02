@@ -10,6 +10,9 @@ abstract class CmnEnum
     const ONE = 1;
     const TWO = 2;
     const THREE = 3;
+    const TRUE = true;
+    const FLASE = false;
+    const EMPTY_NULL = null;
 
     const TABLE_PAYMENT_NAME = 'ps_payments';
     const TABLE_REFUND_NAME = 'ps_refunds';
@@ -29,10 +32,12 @@ abstract class CmnEnum
     const RS_NOT_REFUNDED = 'not-refunded';
 
     const STATUS_SUCCEEDED = 'succeeded'; 
-    const STATUS_COMPLETE = 'complete';
+    const STATUS_COMPLETE = 'completed';
     const STATUS_OPEN = 'open';
     const STATUS_PENDING = 'pending';
     const STATUS_PAYPAL_COMPLETED = 'COMPLETED';
+    const STATUS_PAYPAY_CREATED = 'CREATED';
+    const STATUS_PAYPAY_CODE = 'SUCCESS';
 
     const PROVIDER_STRIPE = 'stripe';
     const PROVIDER_PAYJP = 'payjp';
@@ -45,6 +50,7 @@ abstract class CmnEnum
     const STORE_IN_DB_AUTOMATIC = 'automatic';
     const STORE_IN_DB_MANUAL = 'manual';
 
-    
+    const PAYPAY_ORDER_TYPE = 'ORDER_QR';
+    const PAYPAY_REDIRECT_TYPE_WEB_LINK = 'WEB_LINK';
     
 }

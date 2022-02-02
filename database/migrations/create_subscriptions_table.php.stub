@@ -18,8 +18,7 @@ class CreatePsSubscriptionsTable extends Migration
             $table->string('provider')->nullable();
             $table->string('provider_subscription_id'); // stripe/paypal/payjp card id
             $table->string('provider_customer_id')->nullable();
-            $table->string('provider_plan_id')->nullable(); 
-            $table->json('error_json')->nullable();
+            $table->string('provider_plan_id')->nullable();  
             $table->json('success_json')->nullable();
             $table->timestamps();
             $table->softDeletes();
