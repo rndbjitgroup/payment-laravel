@@ -20,6 +20,9 @@ class CreatePsSubscriptionsTable extends Migration
             $table->string('provider_customer_id')->nullable();
             $table->string('provider_plan_id')->nullable();  
             $table->json('success_json')->nullable();
+            $table->timestamp('pause_at')->nullable();
+            $table->timestamp('resume_at')->nullable();
+            $table->timestamp('cancel_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

@@ -8,7 +8,26 @@ use Illuminate\Support\Facades\DB;
 
 trait Planable // IT IS PLACE RECOMMENDED BY STRIPE
 {
-    public function formatPlanInput($options)
+    private function formatPlanListInput($options)
+    {
+        $input = [];
+
+        if (isset($options['limit'])) {
+            $input['limit'] = $options['limit'];
+        }
+
+        if (isset($options['offset'])) {
+            $input['offset'] = $options['offset'];
+        }
+
+        $extraInput = Arr::except($options, [
+            'limit', 'offset'
+        ]); 
+
+        return array_merge($input, $extraInput);
+    }
+
+    private function formatPlanInput($options)
     {
         $input = [];
 
@@ -40,7 +59,7 @@ trait Planable // IT IS PLACE RECOMMENDED BY STRIPE
         return array_merge($input, $extraInput);
     }
 
-    public function formatPlanResponse($response)
+    private function formatPlanResponse($response)
     { 
         return [
             'provider' => CmnEnum::PROVIDER_STRIPE,
@@ -55,9 +74,9 @@ trait Planable // IT IS PLACE RECOMMENDED BY STRIPE
 
     public function createPlan($options)
     {   
-        $plan = $this->stripe->prices->create( $this->formatPlanInput( $options ) );
-        $this->storePlanInDatabase($plan);
-        return $this->formatPlanResponse($plan);
+        $response = $this->stripe->prices->create( $this->formatPlanInput( $options ) );
+        $this->storePlanInDatabase($response);
+        return $this->formatPlanResponse($response);
     }
 
     public function retrievePlan($planId, $options = [])
@@ -67,17 +86,14 @@ trait Planable // IT IS PLACE RECOMMENDED BY STRIPE
 
     public function updatePlan($planId, $options = [])
     {
-        return $this->stripe->prices->update( $planId, $this->formatPlanInput( $options ) );
+        $response = $this->stripe->prices->update( $planId, $this->formatPlanInput( $options ) );
+        $this->updatePlanInDatabase($planId, $response, $options);
+        return $this->formatPlanResponse($response);
     }
-
-    public function deletePlan($planId, $options = [])
-    {
-
-    } 
 
     public function allPlans($options = [])
     { 
-        return $this->stripe->prices->all($options);
+        return $this->stripe->prices->all($this->formatPlanListInput($options));
     }
 
     private function storePlanInDatabase($response, $options = [], $cardType = null)

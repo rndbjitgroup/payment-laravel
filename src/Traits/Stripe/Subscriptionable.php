@@ -9,7 +9,26 @@ use Illuminate\Support\Facades\DB;
 
 trait Subscriptionable 
 {
-    public function formatSubscriptionInput($options)
+    private function formatSubscriptionListInput($options)
+    {
+        $input = [];
+
+        if (isset($options['limit'])) {
+            $input['limit'] = $options['limit'];
+        }
+
+        if (isset($options['offset'])) {
+            $input['offset'] = $options['offset'];
+        }
+
+        $extraInput = Arr::except($options, [
+            'limit', 'offset'
+        ]); 
+
+        return array_merge($input, $extraInput);
+    }
+
+    private function formatSubscriptionInput($options)
     {
         $input = [];
 
@@ -30,7 +49,7 @@ trait Subscriptionable
         return array_merge($input, $extraInput);
     }
 
-    public function formatSubscriptionResponse($response)
+    private function formatSubscriptionResponse($response)
     { 
         return [
             'provider' => CmnEnum::PROVIDER_STRIPE,
@@ -43,9 +62,9 @@ trait Subscriptionable
 
     public function createSubscription($options)
     {  
-        $subscription = $this->stripe->subscriptions->create( $this->formatSubscriptionInput( $options ) );
-        $this->storeSubscriptionInDatabase($subscription);
-        return $this->formatSubscriptionResponse($subscription);
+        $response = $this->stripe->subscriptions->create( $this->formatSubscriptionInput( $options ) );
+        $this->storeSubscriptionInDatabase($response, $options);
+        return $this->formatSubscriptionResponse($response);
     }
 
     public function retrieveSubscription($subscriptionId, $options = [])
@@ -55,24 +74,21 @@ trait Subscriptionable
 
     public function updateSubscription($subscriptionId, $options = [])
     {
-        return $this->stripe->subscriptions->update( $subscriptionId, $this->formatSubscriptionInput( $options ) );
+        $response = $this->stripe->subscriptions->update( $subscriptionId, $this->formatSubscriptionInput( $options ) );
+        $this->updateSubscriptionInDatabase($subscriptionId, $response, $options);
+        return $this->formatSubscriptionResponse($response);
     }
 
     public function deleteSubscription($subscriptionId, $options = [])
     {
-        if ( (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
-            DB::table(CmnEnum::TABLE_SUBSCRIPTION_NAME)
-            ->where('provider', CmnEnum::PROVIDER_STRIPE)
-            ->where('provider_subscription_id', $subscriptionId)
-            ->delete();
-        }
-         
-        return $this->stripe->subscriptions->delete( $subscriptionId, $options );
+        $response = $this->stripe->subscriptions->delete( $subscriptionId, $options );
+        $this->deleteSubscriptionFromDatabase($subscriptionId, $options);
+        return $response;
     } 
 
     public function allSubscriptions($options = [])
     { 
-        return $this->stripe->subscriptions->all($options);
+        return $this->stripe->subscriptions->all($this->formatSubscriptionListInput($options));
     }
 
     private function storeSubscriptionInDatabase($response, $options = [], $cardType = null)
@@ -107,6 +123,18 @@ trait Subscriptionable
                 'success_json' => json_encode($response), 
                 'updated_at' => now()
             ]);
+    }
+
+    private function deleteSubscriptionFromDatabase($subscriptionId, $options)
+    {
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_SUBSCRIPTION_NAME)
+            ->where('provider', CmnEnum::PROVIDER_STRIPE)
+            ->where('provider_subscription_id', $subscriptionId)
+            ->update(['deleted_at' => now()]);
     }
 
 }

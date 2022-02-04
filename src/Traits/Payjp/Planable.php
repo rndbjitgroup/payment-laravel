@@ -143,11 +143,7 @@ trait Planable
             ->where('provider', CmnEnum::PROVIDER_PAYJP)
             ->where('provider_plan_id', $planId)
             ->update([ 
-                'name' => $response['name'] ?? null, 
-                'amount' => $response['amount'] ?? null, 
-                'currency' => $response['currency'] ?? null, 
-                'interval' => $response['interval'] ?? null, 
-                'trial_days' => $response['trial_days'] ?? null, 
+                'name' => $response['name'] ?? null,  
                 'success_json' => CmnHelper::jsonEncodePrivate($response), 
                 'updated_at' => now()
             ]);
@@ -155,12 +151,14 @@ trait Planable
 
     private function deletePlanFromDatabase($planId, $options = [])
     {
-        if ( (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
-            DB::table(CmnEnum::TABLE_CUSTOMER_NAME)
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_PLAN_NAME)
             ->where('provider', CmnEnum::PROVIDER_PAYJP)
             ->where('provider_plan_id', $planId)
             ->update(['deleted_at' => now()]);
-        }
     }
 
 }

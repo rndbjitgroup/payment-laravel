@@ -11,7 +11,7 @@ use PayPay\OpenPaymentAPI\Models\CreateQrCodePayload;
 
 trait Paymentable 
 {
-    public function formatPaymentInput($options)
+    private function formatPaymentInput($options)
     {
         return [
             'amount' => $options['amount'],
@@ -22,7 +22,7 @@ trait Paymentable
         ];
     }
 
-    public function formatPaymentResponse($response)
+    private function formatPaymentResponse($response)
     { 
         return [
             'provider' => CmnEnum::PROVIDER_PAYPAY,

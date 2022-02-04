@@ -83,11 +83,12 @@ trait Cardable
         $card = $customer->cards->retrieve($cardId);
 
         $updateInput = $this->formatCardInput($options);
+        
         foreach($updateInput as $key => $val) {
             $card->$key = $val;
         } 
         $card->save(); 
-        $this->updateCardInDatabase($customerId, $cardId, $options);
+        $this->updateCardInDatabase($customerId, $cardId, $card, $options);
         return $this->formatCardResponse($card);
     }
 
@@ -115,10 +116,9 @@ trait Cardable
             'provider' => CmnEnum::PROVIDER_PAYJP,
             'provider_customer_id' => $response['customer'],
             'provider_card_id' => $response['id'],
-            'customer_id' => null,
+            'customer_id' => $this->getCustomerIdByProviderCustomerId($response['customer']),
             'brand' => $response['brand'],
-            'country' => $response['country'], 
-            'customer' => $response['customer'],
+            'country' => $response['country'],  
             'exp_month' => $response['exp_month'],
             'exp_year' => $response['exp_year'],
             'last4' => $response['last4'],
@@ -138,11 +138,10 @@ trait Cardable
             ->where('provider', CmnEnum::PROVIDER_PAYJP)
             ->where('provider_customer_id', $customerId)
             ->where('provider_card_id', $cardId)
-            ->update([ 
-                'customer_id' => null,
+            ->update([  
+                'customer_id' => $this->getCustomerIdByProviderCustomerId($response['customer']),
                 'brand' => $response['brand'],
-                'country' => $response['country'], 
-                'customer' => $response['customer'],
+                'country' => $response['country'],  
                 'exp_month' => $response['exp_month'],
                 'exp_year' => $response['exp_year'],
                 'last4' => $response['last4'],
@@ -153,13 +152,22 @@ trait Cardable
 
     private function deleteCardFromDatabase($customerId, $cardId, $options)
     {
-        if ( (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
-            DB::table(CmnEnum::TABLE_CUSTOMER_NAME)
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_CARD_NAME)
             ->where('provider', CmnEnum::PROVIDER_PAYJP)
             ->where('provider_customer_id', $customerId)
             ->where('provider_card_id', $cardId)
             ->update(['deleted_at' => now()]);
-        }
+    }
+
+    private function getCustomerIdByProviderCustomerId($id)
+    {
+        return optional(
+            DB::table(CmnEnum::TABLE_CUSTOMER_NAME)->where('provider_customer_id', $id)->first(['id'])
+        )->id;
     }
 
 }
