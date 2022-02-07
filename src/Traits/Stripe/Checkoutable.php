@@ -7,7 +7,26 @@ use Illuminate\Support\Arr;
 
 trait Checkoutable
 {
-    public function formatCheckoutInput($options)
+    private function formatCheckoutListInput($options)
+    {
+        $input = [];
+
+        if (isset($options['limit'])) {
+            $input['limit'] = $options['limit'];
+        }
+
+        if (isset($options['offset'])) {
+            $input['offset'] = $options['offset'];
+        }
+
+        $extraInput = Arr::except($options, [
+            'limit', 'offset'
+        ]); 
+
+        return array_merge($input, $extraInput);
+    }
+
+    private function formatCheckoutInput($options)
     { 
         $items = [];
         foreach($options['order_items'] as $item) 
@@ -43,7 +62,7 @@ trait Checkoutable
         return $chekoutData;
     }
 
-    public function formatCheckoutResponse($response)
+    private function formatCheckoutResponse($response)
     {
         return [
             'provider' => CmnEnum::PROVIDER_STRIPE,
@@ -85,11 +104,11 @@ trait Checkoutable
 
     public function allCheckouts($options = [])
     { 
-        return $this->stripe->checkout->sessions->all($options); 
+        return $this->stripe->checkout->sessions->all($this->formatCheckoutListInput($options)); 
     }
 
     public function allCheckoutLineItems($csId, $options = [])
     { 
-        return $this->stripe->checkout->sessions->allLineItems($csId, $options); 
+        return $this->stripe->checkout->sessions->allLineItems($csId, $this->formatCheckoutListInput($options)); 
     }
 }

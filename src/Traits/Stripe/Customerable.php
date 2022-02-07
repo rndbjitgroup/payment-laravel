@@ -9,7 +9,26 @@ use Illuminate\Support\Facades\DB;
 
 trait Customerable 
 {
-    public function formatCustomerInput($options)
+    private function formatCustomerListInput($options)
+    {
+        $input = [];
+
+        if (isset($options['limit'])) {
+            $input['limit'] = $options['limit'];
+        }
+
+        if (isset($options['offset'])) {
+            $input['offset'] = $options['offset'];
+        }
+
+        $extraInput = Arr::except($options, [
+            'limit', 'offset'
+        ]); 
+
+        return array_merge($input, $extraInput);
+    }
+
+    private function formatCustomerInput($options)
     {
         $input = [];
 
@@ -25,40 +44,48 @@ trait Customerable
         if(isset($options['description'])) {
             $input['description'] = $options['description'];
         }
-        if(isset($options['address']['city'])) {
-            $input['address']['city'] = $options['address']['city'];
+        
+        if(isset($options['address'])) {
+            $input['address'] = $options['address'];
         }
-        if(isset($options['address']['country'])) {
-            $input['address']['country'] = $options['address']['country'];
-        }
-        if(isset($options['address']['line1'])) {
-            $input['address']['line1'] = $options['address']['line1'];
-        }
-        if(isset($options['address']['line2'])) {
-            $input['address']['line2'] = $options['address']['line2'];
-        }
-        if(isset($options['address']['postal_code'])) {
-            $input['address']['postal_code'] = $options['address']['postal_code'];
-        }
-        if(isset($options['address']['state'])) {
-            $input['address']['state'] = $options['address']['state'];
+
+        if(isset($options['shipping']['address'])) {
+            $input['shipping']['address'] = $options['shipping']['address'];
         } 
 
+        if(isset($options['shipping']['name'])) {
+            $input['shipping']['name'] = $options['shipping']['name'];
+        }
+
+        if(isset($options['shipping']['phone'])) {
+            $input['shipping']['phone'] = $options['shipping']['phone'];
+        }
+
+        if(isset($options['nonce'])) {
+            $input['source'] = $options['nonce'];
+        }
+        if(isset($options['metadata'])) {
+            $input['metadata'] = $options['metadata'];
+        } 
+        
         $extraInput = Arr::except($options, [
-            'name', 'email', 'phone', 'description', 'address' 
+            'name', 'email', 'phone', 'description', 'address', 'nonce', 'metadata' 
         ]);
 
         return array_merge($input, $extraInput);
     }
 
-    public function formatCustomerResponse($response)
+    private function formatCustomerResponse($response)
     { 
         return [
             'provider' => CmnEnum::PROVIDER_STRIPE,
             'id' => $response['id'],
             'name' => $response['name'] ?? null, 
             'email' => $response['email'] ?? null, 
+            'phone' => $response['phone'] ?? null, 
             'description' => $response['description'] ?? null, 
+            'address' => $response['address'] ?? null, 
+            'shipping' => $response['shipping'] ?? null, 
             'provider_response' => $response
         ];
     } 
@@ -77,7 +104,9 @@ trait Customerable
 
     public function updateCustomer($customerId, $options = [])
     {
-        return $this->stripe->customers->update( $customerId, $this->formatCustomerInput( $options ) );
+        $response = $this->stripe->customers->update($customerId, $this->formatCustomerInput( $options ) );
+        $this->updateCustomerInDatabase($customerId, $response, $options);
+        return $response;
     }
 
     public function deleteCustomer($customerId, $options = [])
@@ -89,7 +118,7 @@ trait Customerable
 
     public function allCustomers($options = [])
     { 
-        return $this->stripe->customers->all($options); 
+        return $this->stripe->customers->all($this->formatCustomerListInput($options)); 
     }
 
     private function storeCustomerInDatabase($response, $options = [], $customerType = null)
@@ -102,6 +131,7 @@ trait Customerable
             'provider' => CmnEnum::PROVIDER_STRIPE,
             'provider_customer_id' => $response['id'],
             'email' => $response['email'],
+            'phone' => $response['phone'] ?? null,
             'description' => $response['description'], 
             'success_json' => json_encode($response),
             'created_at' => now(),
@@ -120,6 +150,7 @@ trait Customerable
             ->where('provider_customer_id', $customerId)
             ->update([
                 'email' => $response['email'],
+                'phone' => $response['phone'] ?? null,
                 'description' => $response['description'], 
                 'success_json' => json_encode($response),
                 'updated_at' => now()
@@ -128,12 +159,14 @@ trait Customerable
 
     private function deleteCustomerFromDatabase($customerId, $options)
     {
-        if ( (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
-            DB::table(CmnEnum::TABLE_CUSTOMER_NAME)
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_CUSTOMER_NAME)
             ->where('provider', CmnEnum::PROVIDER_STRIPE)
             ->where('provider_customer_id', $customerId)
             ->update(['deleted_at' => now()]);
-        }
     }
 
 }

@@ -4,13 +4,33 @@ namespace Bjit\Payment\Traits\Stripe;
 
 use Bjit\Payment\Enums\CmnEnum;
 use Exception;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 trait Refundable
 {
-    public function formatRefundInput($options, $paymentId)
+    private function formatRefundListInput($options)
+    {
+        $input = [];
+
+        if (isset($options['limit'])) {
+            $input['limit'] = $options['limit'];
+        }
+
+        if (isset($options['offset'])) {
+            $input['offset'] = $options['offset'];
+        }
+
+        $extraInput = Arr::except($options, [
+            'limit', 'offset'
+        ]); 
+
+        return array_merge($input, $extraInput);
+    }
+
+    private function formatRefundInput($options, $paymentId)
     {
         $formatInput = [];
 
@@ -35,7 +55,7 @@ trait Refundable
         return $formatInput;
     } 
 
-    public function formatRefundReponse($response)
+    private function formatRefundReponse($response)
     {
         return [
             'provider' => CmnEnum::PROVIDER_STRIPE,
@@ -64,7 +84,14 @@ trait Refundable
 
     public function updateRefund($refundId, $options = [])
     {
-        return $this->stripe->refunds->update( $refundId, $options );
+        $response = $this->stripe->refunds->update( $refundId, $options );
+        $this->updateRefundInDatabase($refundId, $response, $options);
+        return $this->formatRefundReponse($response);
+    }
+
+    public function allRefunds($options = [])
+    { 
+        return $this->stripe->refunds->all($this->formatRefundListInput($options));
     }
 
     private function storeRefundInDatabase($response, $options, $providerPaymentId)
@@ -110,51 +137,35 @@ trait Refundable
         
     }
 
-    private function updateRefundInDatabase($refundId, $response, $options, $providerPaymentId)
+    private function updateRefundInDatabase($refundId, $response, $options)
     { 
         if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
             return true;
         }
 
-        DB::beginTransaction();
-
-        try {
-            $paymentId = $this->getPaymentIdByProviderPaymentId($providerPaymentId);
-            $now = now();
-
-            DB::table(CmnEnum::TABLE_REFUND_NAME)
-                ->where('provider', CmnEnum::PROVIDER_STRIPE)
-                ->where('provider_refund_id', $refundId)
-                ->update([ 
-                    'user_id' => Auth::user()->id ?? CmnEnum::ONE,
-                    'amount' => $this->getPaymentAmount($response['charge']),
-                    'amount_refunded' => $response['amount'],
-                    'currency' => $response['currency'],
-                    'status' => $response['status'],
-                    'generic_refund_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::RS_REFUNDED : CmnEnum::RS_NOT_REFUNDED, 
-                    'generic_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
-                    'refund_reason' => $response['reason'] ?? '',
-                    'success_json' => json_encode($response), 
-                    'updated_at' => $now
-                ]);
-
-            DB::table(CmnEnum::TABLE_PAYMENT_NAME)->where('id', $paymentId)->update([
-                'refunded_at' => $now
-            ]);
-
-            DB::commit();
-            return true;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw new RuntimeException($e->getMessage()); 
-        }
+        DB::table(CmnEnum::TABLE_REFUND_NAME)
+            ->where('provider', CmnEnum::PROVIDER_STRIPE)
+            ->where('provider_refund_id', $refundId)
+            ->update([ 
+                'user_id' => Auth::user()->id ?? CmnEnum::ONE,
+                'amount' => $this->getPaymentAmount($response['charge']),
+                'amount_refunded' => $response['amount'],
+                'currency' => $response['currency'],
+                'status' => $response['status'],
+                'generic_refund_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::RS_REFUNDED : CmnEnum::RS_NOT_REFUNDED, 
+                'generic_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
+                'refund_reason' => $response['reason'] ?? CmnEnum::EMPTY_NULL,
+                'success_json' => json_encode($response), 
+                'updated_at' => now()
+            ]); 
         
     }
 
     private function getPaymentIdByProviderPaymentId($id)
     {
         return optional(
-            DB::table(CmnEnum::TABLE_PAYMENT_NAME)->where('provider_payment_id', $id)->orWhere('provider_payment_intent_id', $id)->first(['id'])
+            DB::table(CmnEnum::TABLE_PAYMENT_NAME)->where('provider_payment_id', $id)->first(['id'])
         )->id;
-    }
+    } 
+
 }

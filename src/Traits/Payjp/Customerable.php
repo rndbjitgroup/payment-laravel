@@ -34,18 +34,24 @@ trait Customerable
     {
         $input = [];
 
-        if(isset($options['name'])) {
-            $input['name'] = $options['name'];
-        }
         if(isset($options['email'])) {
             $input['email'] = $options['email'];
         } 
         if(isset($options['description'])) {
             $input['description'] = $options['description'];
         }
+        if(isset($options['nonce'])) {
+            $input['card'] = $options['nonce'];
+        }
+        if(isset($options['default_nonce'])) {
+            $input['default_card'] = $options['default_nonce'];
+        }
+        if(isset($options['metadata'])) {
+            $input['metadata'] = $options['metadata'];
+        }
 
         $extraInput = Arr::except($options, [
-            'name', 'email', 'description'
+            'email', 'description', 'nonce', 'default_nonce', 'metadata'
         ]);
 
         return array_merge($input, $extraInput);
@@ -63,6 +69,8 @@ trait Customerable
             'name' => $response['name'] ?? null, 
             'email' => $response['email'] ?? null, 
             'description' => $response['description'] ?? null, 
+            'cards' => $response['cards'] ?? null, 
+            'metadata' => $response['metadata'] ?? null, 
             'provider_response' => $response
         ];
     } 
@@ -116,8 +124,9 @@ trait Customerable
         return DB::table(CmnEnum::TABLE_CUSTOMER_NAME)->insert([
             'provider' => CmnEnum::PROVIDER_PAYJP,
             'provider_customer_id' => $response['id'],
+            'provider_default_card_id' => $response['default_card'] ?? CmnEnum::EMPTY_NULL,
             'email' => $response['email'],
-            'description' => $response['description'], 
+            'description' => $response['description'],  
             'success_json' => CmnHelper::jsonEncodePrivate($response),
             'created_at' => now(),
             'updated_at' => now()
@@ -133,11 +142,10 @@ trait Customerable
         return DB::table(CmnEnum::TABLE_CUSTOMER_NAME)
             ->where('provider', CmnEnum::PROVIDER_PAYJP)
             ->where('provider_customer_id', $customerId) 
-            ->update([
-                'provider' => CmnEnum::PROVIDER_PAYJP,
-                'provider_customer_id' => $response['id'],
+            ->update([ 
                 'email' => $response['email'],
                 'description' => $response['description'], 
+                'provider_default_card_id' => $response['default_card'] ?? CmnEnum::EMPTY_NULL,
                 'success_json' => CmnHelper::jsonEncodePrivate($response), 
                 'updated_at' => now()
             ]);
@@ -145,12 +153,14 @@ trait Customerable
 
     private function deleteCustomerFromDatabase($customerId, $options)
     {
-        if ( (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
-            DB::table(CmnEnum::TABLE_CUSTOMER_NAME)
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+        
+        return DB::table(CmnEnum::TABLE_CUSTOMER_NAME)
             ->where('provider', CmnEnum::PROVIDER_PAYJP)
             ->where('provider_customer_id', $customerId)
             ->update(['deleted_at' => now()]);
-        }
     }
 
 }

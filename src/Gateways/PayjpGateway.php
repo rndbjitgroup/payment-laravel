@@ -6,6 +6,7 @@ use Bjit\Payment\Gateways\Interfaces\CustomerInterface;
 use Bjit\Payment\Gateways\Interfaces\GatewayInterface;
 use Bjit\Payment\Traits\Payjp\Cardable;
 use Bjit\Payment\Traits\Payjp\Customerable;
+use Bjit\Payment\Traits\Payjp\Exceptionable;
 use Bjit\Payment\Traits\Payjp\Paymentable;
 use Bjit\Payment\Traits\Payjp\Planable;
 use Bjit\Payment\Traits\Payjp\Refundable;
@@ -15,12 +16,14 @@ use Payjp\Payjp;
 
 class PayjpGateway extends AbstractGateway implements GatewayInterface, CustomerInterface
 {
+    use Exceptionable;
     use Paymentable;
     use Refundable;
     use Customerable;
     use Cardable;
     use Planable;
     use Subscriptionable;
+    
 
     /**
      * The scopes being requested.

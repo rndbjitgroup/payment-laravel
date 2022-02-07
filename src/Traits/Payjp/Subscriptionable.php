@@ -3,6 +3,7 @@
 namespace Bjit\Payment\Traits\Payjp;
 
 use Bjit\Payment\Enums\CmnEnum;
+use Bjit\Payment\Helpers\CmnHelper;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -38,10 +39,13 @@ trait Subscriptionable
         } 
         if(isset($options['provider_plan_id'])) {
             $input['plan'] = $options['provider_plan_id'];
-        }    
+        }   
 
+        if(isset($options['trial_end'])) {
+            $input['trial_end'] = $options['trial_end'];
+        }
         $extraInput = Arr::except($options, [
-            'provider_customer_id', 'provider_plan_id'
+            'provider_customer_id', 'provider_plan_id', 'trial_end'
         ]);
 
         return array_merge($input, $extraInput);
@@ -96,19 +100,25 @@ trait Subscriptionable
     public function pauseSubscription($subscriptionId, $options = [])
     {
         $subscription = Subscription::retrieve( $subscriptionId );  
-        return $subscription->pause();
+        $response = $subscription->pause();
+        $this->pauseSubscriptionFromDatabase($subscriptionId, $response, $options);
+        return $response;
     }
 
     public function resumeSubscription($subscriptionId, $options = [])
     {
         $subscription = Subscription::retrieve( $subscriptionId );  
-        return $subscription->resume();
+        $response = $subscription->resume();
+        $this->resumeSubscriptionFromDatabase($subscriptionId, $response, $options);
+        return $response;
     } 
 
     public function cancelSubscription($subscriptionId, $options = [])
     {
         $subscription = Subscription::retrieve( $subscriptionId );  
-        return $subscription->cancel();
+        $response = $subscription->cancel();
+        $this->cancelSubscriptionFromDatabase($subscriptionId, $response, $options);
+        return $response;
     }
 
     public function deleteSubscription($subscriptionId, $options = [])
@@ -135,7 +145,7 @@ trait Subscriptionable
             'provider_subscription_id' => $response['id'],
             'provider_customer_id' => $response['customer'],
             'provider_plan_id' => $response['plan']['id'] ?? null, 
-            'success_json' => json_encode($response),
+            'success_json' => CmnHelper::jsonEncodePrivate($response),
             'created_at' => now(),
             'updated_at' => now()
         ]);
@@ -153,19 +163,68 @@ trait Subscriptionable
             ->update([ 
                 'provider_customer_id' => $response['customer'],
                 'provider_plan_id' => $response['plan']['id'] ?? null, 
-                'success_json' => json_encode($response), 
+                'success_json' => CmnHelper::jsonEncodePrivate($response), 
                 'updated_at' => now()
             ]);
     }
 
     private function deleteSubscriptionFromDatabase($subscriptionId, $options = [])
     {
-        if ( (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
-            DB::table(CmnEnum::TABLE_CUSTOMER_NAME)
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_SUBSCRIPTION_NAME)
             ->where('provider', CmnEnum::PROVIDER_PAYJP)
             ->where('provider_subscription_id', $subscriptionId)
             ->update(['deleted_at' => now()]);
+    }
+
+    private function cancelSubscriptionFromDatabase($subscriptionId, $response, $options = [])
+    {
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
         }
+
+        return DB::table(CmnEnum::TABLE_SUBSCRIPTION_NAME)
+            ->where('provider', CmnEnum::PROVIDER_PAYJP)
+            ->where('provider_subscription_id', $subscriptionId)
+            ->update([
+                'success_json' => CmnHelper::jsonEncodePrivate($response), 
+                'cancel_at' => now()
+            ]);
+    }
+
+    private function pauseSubscriptionFromDatabase($subscriptionId, $response, $options = [])
+    {
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_SUBSCRIPTION_NAME)
+            ->where('provider', CmnEnum::PROVIDER_PAYJP)
+            ->where('provider_subscription_id', $subscriptionId)
+            ->update([
+                'success_json' => CmnHelper::jsonEncodePrivate($response), 
+                'pause_at' => now(), 
+                'resume_at' => null
+            ]);
+    }
+
+    private function resumeSubscriptionFromDatabase($subscriptionId, $response, $options = [])
+    {
+        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+            return true;
+        }
+
+        return DB::table(CmnEnum::TABLE_SUBSCRIPTION_NAME)
+            ->where('provider', CmnEnum::PROVIDER_PAYJP)
+            ->where('provider_subscription_id', $subscriptionId)
+            ->update([
+                'success_json' => CmnHelper::jsonEncodePrivate($response), 
+                'pause_at' => null, 
+                'resume_at' => now()
+            ]);
     }
     
 }

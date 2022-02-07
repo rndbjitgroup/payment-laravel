@@ -17,7 +17,9 @@ class CreatePsCustomersTable extends Migration
             $table->id();  
             $table->string('provider')->nullable();
             $table->string('provider_customer_id'); // stripe/paypal/payjp customer id
+            $table->string('provider_default_card_id')->nullable(); // stripe/paypal/payjp customer card id
             $table->string('email', 512)->nullable();
+            $table->string('phone', 20)->nullable();
             $table->text('description')->nullable();
             $table->json('success_json')->nullable();
             $table->timestamps();

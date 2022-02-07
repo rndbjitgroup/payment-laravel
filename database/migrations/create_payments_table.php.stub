@@ -37,6 +37,7 @@ class CreatePsPaymentsTable extends Migration
             $table->string('customer_email')->nullable();
             $table->string('customer_phone')->nullable(); 
             $table->json('success_json')->nullable();
+            $table->timestamp('captured_at')->nullable();
             $table->timestamp('refunded_at')->nullable();
             $table->timestamp('canceled_at')->nullable();
             $table->timestamps();
