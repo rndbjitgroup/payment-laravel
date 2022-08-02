@@ -20,7 +20,7 @@ class CreatePsPaymentsTable extends Migration
             $table->string('provider')->nullable();
             $table->string('provider_payment_id'); // stripe/paypal/payjp payment id
             $table->string('provider_payment_intent_id')->nullable(); // stripe/paypal/payjp payment intend id
-            $table->bigInteger('user_id');
+            $table->bigInteger('user_id')->nullable();
             $table->bigInteger('order_id')->nullable();
             $table->double('amount', 8, 2);
             $table->string('currency', 5);
@@ -37,7 +37,12 @@ class CreatePsPaymentsTable extends Migration
             $table->string('customer_email')->nullable();
             $table->string('customer_phone')->nullable(); 
             $table->json('success_json')->nullable();
+            $table->string('provider_authorized_id')->nullable();
+            $table->string('provider_captured_id')->nullable();
+            $table->string('provider_authorized_captured_id')->nullable();
+            $table->timestamp('authorized_at')->nullable();
             $table->timestamp('captured_at')->nullable();
+            $table->timestamp('authorized_captured_at')->nullable();
             $table->timestamp('refunded_at')->nullable();
             $table->timestamp('canceled_at')->nullable();
             $table->timestamps();

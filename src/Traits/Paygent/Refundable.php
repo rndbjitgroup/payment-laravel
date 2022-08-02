@@ -1,13 +1,12 @@
 <?php 
 
-namespace Bjit\Payment\Traits\Payjp;
+namespace Bjit\Payment\Traits\Paygent;
 
 use Bjit\Payment\Enums\CmnEnum;
 use Bjit\Payment\Helpers\CmnHelper;
 use Exception;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Payjp\Charge;
+use Illuminate\Support\Facades\DB; 
 use RuntimeException;
 
 trait Refundable 

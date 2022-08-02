@@ -11,22 +11,28 @@ trait Checkoutable
 {
     public function formatCheckoutInput($options)
     {
-
         $items = [];
         foreach($options['order_items'] as $item) 
         {
             $itemData = [ 
                 'name' => $item['name'],  
                 'unit_amount' => [
-                    "currency_code"=> $item['price']['currency'],
-                    "value"=> $item['price']['unit_amount']
+                    'currency_code' => $item['price']['currency'],
+                    'value' => $item['price']['amount'],
                 ],
                 'quantity' => $item['quantity'],
-                'description' => $item['description']
+                'description' => $item['description'] ?? null
             ]; 
 
+            if(isset($item['tax']['value'])) {
+                $itemData['tax'] = [
+                    'currency_code' => $item['tax']['currency'],
+                    'value' => $item['tax']['value']
+                ];
+            }
+
             $extraData = Arr::except($item, [
-                'name', 'price', 'currency', 'quantity', 'description'
+                'name', 'price', 'tax', 'currency', 'quantity', 'description'
             ]);
     
             $items[] = array_merge($itemData, $extraData); 
@@ -67,7 +73,8 @@ trait Checkoutable
         }  
 
         $extraData = Arr::except($options, [
-            'intent', 'application_context', 'purchase_units', 'amount_total', 'item_total', 'tax_total', 'currency', 'description', 'order_items', 'state'
+            'intent', 'application_context', 'purchase_units', 'amount_total', 'item_total', 'tax_total', 
+            'currency', 'description', 'order_items', 'state', 'success_url', 'cancel_url'
         ]); 
         
         return array_merge($data, $extraData);
@@ -75,6 +82,10 @@ trait Checkoutable
 
     public function formatCheckoutResponse($response)
     { 
+        if(isset($response['error'])) {
+            return ['error' => $response['error']];
+        }
+
         return [
             'provider' => CmnEnum::PROVIDER_PAYPAL,
             'id' => $response['id'],
@@ -91,8 +102,12 @@ trait Checkoutable
 
     public function createCheckout($options)
     {  
+        //dd($options, $this->formatCheckoutInput($options));
         $response = $this->paypal->createOrder($this->formatCheckoutInput($options)); 
-        $this->storePaymentInDatabase($response, $options, CmnEnum::PT_CHECKOUT_PAYMENT);
+        if(isset($response['id'])) { 
+            $response = $this->paypal->showOrderDetails( $response['id'] );
+            $this->storePaymentInDatabase($response, $options, CmnEnum::PT_CHECKOUT_PAYMENT);
+        }
         return $this->formatCheckoutResponse($response);
     }
 
@@ -108,54 +123,19 @@ trait Checkoutable
         return $this->formatCheckoutResponse($response);
     }
 
-    public function captureCheckout($paymentId, $options = [])
+    public function authorizeCheckout($paymentId, $options = [])
     {
-        $response = $this->paypal->capturePaymentOrder( $paymentId );
-        $this->updatePaymentInDatabase($paymentId, $response, $options);
+        $response = $this->paypal->authorizePaymentOrder( $paymentId );
+        $this->updateAuthorizePaymentInDatabase($paymentId, $response, $options);
         return $this->formatCheckoutResponse($response);
     } 
 
-    // private function storePaymentInDatabase($response, $options, $paymentType)
-    // {  
-    //     if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
-    //         return true;
-    //     }
+    public function captureCheckout($paymentId, $options = [])
+    {
+        $response = $this->paypal->capturePaymentOrder( $paymentId );  
+        $this->updateCapturePaymentInDatabase($paymentId, $response, $options);
+        return $this->formatCheckoutResponse($response);
+    } 
 
-    //     return DB::table(CmnEnum::TABLE_PAYMENT_NAME)->insert([
-    //         'state' => $options['state'] ?? null,
-    //         'type' => $paymentType,
-    //         'provider' => CmnEnum::PROVIDER_PAYPAL,
-    //         'provider_payment_id' => $response['id'], 
-    //         'user_id' => Auth::user()->id ?? CmnEnum::ONE,
-    //         'amount' => $options['amount_total'] ?? $options['amount'] ?? 0,
-    //         'currency' => $options['currency'], 
-    //         'status' => $response['status'],
-    //         'generic_payment_status' => $response['status'] == CmnEnum::STATUS_PAYPAL_COMPLETED ? CmnEnum::PS_PAID : CmnEnum::PS_UNPAID,
-    //         'generic_status' => $response['status'] == CmnEnum::STATUS_PAYPAL_COMPLETED ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
-    //         'description' => $response['description'] ?? null,
-    //         'success_json' => json_encode($response),
-    //         'created_at' => now(),
-    //         'updated_at' => now()
-    //     ]);
-    // }
-
-    // private function updatePaymentInDatabase($paymentId, $response, $options) 
-    // {  
-    //     if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
-    //         return true;
-    //     }
-
-    //     return DB::table(CmnEnum::TABLE_PAYMENT_NAME)
-    //         ->where('provider', CmnEnum::PROVIDER_PAYPAL)
-    //         ->where('provider_payment_id', $paymentId)
-    //         ->update([  
-    //             'user_id' => Auth::user()->id ?? CmnEnum::ONE,
-    //             'status' => $response['status'],
-    //             'generic_payment_status' => $response['status'] == CmnEnum::STATUS_PAYPAL_COMPLETED ? CmnEnum::PS_PAID : CmnEnum::PS_UNPAID,
-    //             'generic_status' => $response['status'] == CmnEnum::STATUS_PAYPAL_COMPLETED ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
-    //             'success_json' => json_encode($response),
-    //             'created_at' => now(),
-    //             'updated_at' => now()
-    //         ]);
-    // }
+    
 }

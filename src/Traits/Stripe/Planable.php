@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 trait Planable // IT IS PLACE RECOMMENDED BY STRIPE
 {
-    private function formatPlanListInput($options)
+    public function formatPlanListInput($options)
     {
         $input = [];
 
@@ -27,7 +27,7 @@ trait Planable // IT IS PLACE RECOMMENDED BY STRIPE
         return array_merge($input, $extraInput);
     }
 
-    private function formatPlanInput($options)
+    public function formatPlanInput($options)
     {
         $input = [];
 
@@ -59,7 +59,7 @@ trait Planable // IT IS PLACE RECOMMENDED BY STRIPE
         return array_merge($input, $extraInput);
     }
 
-    private function formatPlanResponse($response)
+    public function formatPlanResponse($response)
     { 
         return [
             'provider' => CmnEnum::PROVIDER_STRIPE,
@@ -96,7 +96,7 @@ trait Planable // IT IS PLACE RECOMMENDED BY STRIPE
         return $this->stripe->prices->all($this->formatPlanListInput($options));
     }
 
-    private function storePlanInDatabase($response, $options = [], $cardType = null)
+    public function storePlanInDatabase($response, $options = [], $cardType = null)
     {  
         if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
             return true;
@@ -116,7 +116,7 @@ trait Planable // IT IS PLACE RECOMMENDED BY STRIPE
         ]);
     }
 
-    private function updatePlanInDatabase($planId, $response, $options = [])
+    public function updatePlanInDatabase($planId, $response, $options = [])
     {  
         if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
             return true;

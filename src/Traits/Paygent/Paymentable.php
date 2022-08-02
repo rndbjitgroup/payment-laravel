@@ -1,6 +1,6 @@
 <?php 
 
-namespace Bjit\Payment\Traits\Payjp;
+namespace Bjit\Payment\Traits\Paygent;
 
 use Bjit\Payment\Enums\CmnEnum;
 use Bjit\Payment\Helpers\CmnHelper;
@@ -33,18 +33,26 @@ trait Paymentable
     public function formatPaymentInput($options)
     {
         $input = [
-            'amount' => $options['amount'],
-            'currency' => $options['currency'],
-            'card' => $options['nonce'] ?? CmnEnum::EMPTY_NULL,
-            'description' => $options['description'] ?? CmnEnum::EMPTY_NULL   
+            'trading_id' => $options['trading_id'],
+            'payment_type' => $options['payment_type'],
+            'id' => $options['amount'],
+            //'currency' => $options['currency'], 
+            //'card' => $options['nonce'] ?? CmnEnum::EMPTY_NULL,  
+            'seq_merchant_id' => $options['seq_merchant_id'] ?? config('payments.paygent.merchant_id'), 
+            'payment_term_min' => $options['payment_term_min'] ?? CmnEnum::PAYGENT_PAYMENT_TERM_MIN, 
+            'payment_class' => $options['payment_class'] ?? CmnEnum::PAYGENT_PAYMENT_CLASS, 
+            'use_card_conf_number' => $options['use_card_conf_number'] ?? CmnEnum::PAYGENT_USE_CARD_CONF_NUMBER, 
+            'banner_url' => $options['banner_url'] ?? '',
+            'return_url' => $options['success_url'] ?? '',
+            'stop_return_url' => $options['cancel_url'] ?? '',
+            //'hc' => $options['hc'] ?? $this->generateHash($options),
         ];  
-
-        if (isset($options['capture'])) {
-            $input['capture'] = $options['capture'];
-        }
+        
+        $input['hc'] = $options['hc'];
 
         $extraInput = Arr::except($options, [
-            'amount', 'currency', 'nonce', 'description', 'capture'
+            'trading_id', 'payment_type', 'id', 'seq_merchant_id', 'payment_term_min', 'payment_class', 'use_card_conf_number',
+            'banner_url', 'return_url', 'stop_return_url', 'hc', 'has_generation_key'
         ]); 
 
         return array_merge($input, $extraInput);
@@ -75,11 +83,11 @@ trait Paymentable
             'customer_phone' => $response['customer_details']['phone'] ?? CmnEnum::EMPTY_NULL,
             'provider_response' => $response
         ];
-    }
+    } 
  
     public function createPayment($options)
     { 
-        $response = Charge::create($this->formatPaymentInput($options)); 
+        $response = $this->formatPaymentInput($options); 
         $this->storePaymentInDatabase($response, $options, CmnEnum::PT_DIRECT_PAYMENT);
         return $this->formatPaymentResponse($response);
     }
@@ -127,23 +135,23 @@ trait Paymentable
             //'state' => $options['state'], 
             'type' => $paymentType,
             'provider' => CmnEnum::PROVIDER_PAYJP,
-            'provider_payment_id' => $response['id'],
+            'provider_payment_id' => $response['trading_id'],
             'user_id' => Auth::user()->id ?? CmnEnum::ONE,
-            'amount' => $response['amount'],
+            'amount' => $options['amount'],
             'currency' => $response['currency'],
-            'captured' => $response['captured'],
+            'captured' => $response['captured'] ?? CmnEnum::EMPTY_NULL,
             'payment_status' => $response['paid'] ?? CmnEnum::EMPTY_NULL,
             'status' => $response['status'] ?? CmnEnum::EMPTY_NULL,
-            'generic_payment_status' => $response['paid'] ? CmnEnum::PS_PAID : CmnEnum::PS_UNPAID,
-            'generic_status' => $response['paid'] ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
-            'description' => $response['description'],
+            'generic_payment_status' => isset($response['paid']) ? CmnEnum::PS_PAID : CmnEnum::PS_UNPAID,
+            'generic_status' => isset($response['paid']) ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
+            'description' => $response['description'] ?? CmnEnum::EMPTY_NULL,
             'payment_type' => CmnEnum::PT_CARD,
             'card_brand' => $response['card']['brand'] ?? CmnEnum::EMPTY_NULL,
             'last_4_digit' => $response['card']['last4'] ?? CmnEnum::EMPTY_NULL,
             'customer_name' =>$response['card']['name'] ?? CmnEnum::EMPTY_NULL,
             'customer_email' => $response['customer_details']['email'] ?? CmnEnum::EMPTY_NULL,
             'customer_phone' => $response['customer_details']['phone'] ?? CmnEnum::EMPTY_NULL,
-            'success_json' => CmnHelper::jsonEncodePrivate($response),
+            'success_json' => json_encode($response),
             'created_at' => now(),
             'updated_at' => now()
         ]);

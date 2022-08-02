@@ -7,6 +7,7 @@ BJIT Payment System is a payment system which is handled a common way for multip
 - PayJP 
 - Paypal 
 - Paypay
+- Paygent 
 
 ## Features
 
@@ -88,13 +89,9 @@ _**$options** is optional_
 **Not Supported Payment Gateway:** _PayJP_
 ```sh
 use Bjit\Payment\Facades\Payment;
-Payment::gateway($request->gateway)->createCheckout([ 
-    'payment_method_types' => $request->paymentMethodTypes,
-    'order_items' => $request->orderItems, 
-    'mode' => $request->payment_mode,
-    'payment_intent_data' => [
-        'capture_method' => 'automatic', // automatic/manual
-    ],
+Payment::gateway($request->gateway)->createCheckout([  
+    'intent' => '',
+    'order_items' => $request->orderItems,  
     'success_url' => route($request->gateway . '.success'), 
     'cancel_url' => route($request->gateway . '.cancel'),
     'state' => sha1(md5(sha1(Auth::user()->id ?? rand(1111, 9999)))) // unique id

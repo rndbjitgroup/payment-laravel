@@ -59,6 +59,20 @@ return [
         'notify_url'     => env('PAYPAL_NOTIFY_URL', ''), // Change this accordingly for your application.
         'locale'         => env('PAYPAL_LOCALE', 'en_US'), // force gateway language  i.e. it_IT, es_ES, en_US ... (for express checkout only)
         'validate_ssl'   => env('PAYPAL_VALIDATE_SSL', true), // Validate SSL when creating api client.
+    ],
+
+    'paygent' => [
+        'env' => env('PAYGENT_ENV', 'local'),
+        'key' => env('PAYGENT_KEY', ''),
+        'secret' => '',
+        'merchant_id' => env('PAYGENT_MERCHANT_ID', ''),
+        'connect_id' => env('PAYGENT_CONNECT_ID', ''),
+        'connect_password' => env('PAYGENT_CONNECT_PASSWORD', ''),
+        'token' => env('PAYGENT_TOKEN', ''),
+        'pem' => env('PAYGENT_PEM', ''),
+        'crt' => env('PAYGENT_CRT', ''),
+        'telegram_version' => env('PAYGENT_TELEGRAM_VERSION', '1.0'),
+        'base_url' => env('PAYGENT_BASE_URL', 'https://sandbox.paygent.co.jp/v/u/request')
     ]
 
 ];
