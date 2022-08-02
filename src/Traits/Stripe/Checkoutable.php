@@ -26,7 +26,7 @@ trait Checkoutable
         return array_merge($input, $extraInput);
     }
 
-    private function formatCheckoutInput($options)
+    public function formatCheckoutInput($options)
     { 
         $items = [];
         foreach($options['order_items'] as $item) 
@@ -44,13 +44,20 @@ trait Checkoutable
         }
 
         $chekoutData = [
-            'payment_method_types' => $options['payment_method_types'],
+            //'payment_method_types' => $options['payment_method_types'],
             'line_items' => $items,
-            'mode' => $options['mode'],
-            'payment_intent_data' => $options['payment_intent_data'],
+            'mode' => $options['mode'] ?? CmnEnum::DEFAULT_STRIPE_PAYMENT_MODE,
+            //'payment_intent_data' => $options['payment_intent_data'],
             'success_url' => $options['success_url'] . '?state=' . $options['state'], 
             'cancel_url' => $options['cancel_url'] . '?state=' . $options['state'],
         ]; 
+
+        if(isset($options['payment_method_types'])) {
+            $chekoutData['payment_method_types'] = $options['payment_method_types'];
+        }
+        if(isset($options['payment_intent_data'])) {
+            $chekoutData['payment_intent_data'] = $options['payment_intent_data'];
+        }
 
         $extraData = Arr::except($options, [
             'payment_method_types', 'order_items', 'mode', 'payment_intent_data', 
@@ -62,7 +69,7 @@ trait Checkoutable
         return $chekoutData;
     }
 
-    private function formatCheckoutResponse($response)
+    public function formatCheckoutResponse($response)
     {
         return [
             'provider' => CmnEnum::PROVIDER_STRIPE,
@@ -100,6 +107,13 @@ trait Checkoutable
     public function retrieveCheckout($csId, $options = [])
     { 
         return $this->formatCheckoutResponse($this->stripe->checkout->sessions->retrieve($csId, $options)); 
+    }
+
+    public function updateCheckout($csId, $options = [])
+    {
+        $response = $this->stripe->checkout->sessions->retrieve( $csId, $options );
+        $this->updatePaymentInDatabase($csId, $response, $options);
+        return $this->formatPaymentResponse($response);
     }
 
     public function allCheckouts($options = [])

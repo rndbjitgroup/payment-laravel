@@ -28,7 +28,7 @@ trait Customerable
         return array_merge($input, $extraInput);
     }
 
-    private function formatCustomerInput($options)
+    public function formatCustomerInput($options)
     {
         $input = [];
 
@@ -75,7 +75,7 @@ trait Customerable
         return array_merge($input, $extraInput);
     }
 
-    private function formatCustomerResponse($response)
+    public function formatCustomerResponse($response)
     { 
         return [
             'provider' => CmnEnum::PROVIDER_STRIPE,

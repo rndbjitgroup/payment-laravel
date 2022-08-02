@@ -16,7 +16,7 @@ class CreatePsRefundsTable extends Migration
         Schema::create('ps_refunds', function (Blueprint $table) {
             $table->id(); 
             $table->string('state')->nullable();
-            $table->string('payment_id')->nullable(); // payment table pk id
+            $table->bigInteger('payment_id')->nullable(); // payment table pk id
             $table->string('provider')->nullable();
             $table->string('provider_refund_id'); // stripe/paypal/payjp refund id
             $table->bigInteger('user_id'); 

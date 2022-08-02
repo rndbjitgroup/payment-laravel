@@ -28,7 +28,7 @@ trait Paymentable
         return array_merge($input, $extraInput);
     }
 
-    private function formatPaymentInput($options)
+    public function formatPaymentInput($options)
     {
         $input = [];
 
@@ -55,8 +55,11 @@ trait Paymentable
         return array_merge($input, $extraInput);
     }
 
-    private function formatPaymentResponse($response)
+    public function formatPaymentResponse($response)
     { 
+        $genericPaymentStatus = ((isset($response['paid']) && $response['paid']) || (isset($response['payment_status']) && $response['payment_status'])) ? CmnEnum::PS_PAID : CmnEnum::PS_UNPAID;
+        $genericStatus = ($response['status'] == CmnEnum::STATUS_SUCCEEDED || $response['status'] == CmnEnum::STATUS_STRIPE_COMPLETE) ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN;
+
         return [
             'provider' => CmnEnum::PROVIDER_STRIPE,
             'id' => $response['id'],
@@ -65,8 +68,10 @@ trait Paymentable
             'captured' => $response['captured'],
             'payment_status' => $response['paid'] ?? null,
             'status' => $response['status'] ?? null,
-            'generic_payment_status' => $response['paid'] ? CmnEnum::PS_PAID : CmnEnum::PS_UNPAID,
-            'generic_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
+            //'generic_payment_status' => $response['paid'] ? CmnEnum::PS_PAID : CmnEnum::PS_UNPAID,
+            //'generic_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
+            'generic_payment_status' => $genericPaymentStatus,
+            'generic_status' => $genericStatus,
             'description' => $response['description'],
             'payment_type' => $response['payment_method_details']['type'] ?? $response['payment_method_types'][CmnEnum::ZERO] ?? null,
             'card_brand' => $response['payment_method_details']['card']['brand'] ?? null,
@@ -159,6 +164,9 @@ trait Paymentable
             $updateData['captured_at'] = now();
         }
 
+        $genericPaymentStatus = ((isset($response['paid']) && $response['paid']) || (isset($response['payment_status']) && $response['payment_status'])) ? CmnEnum::PS_PAID : CmnEnum::PS_UNPAID;
+        $genericStatus = ($response['status'] == CmnEnum::STATUS_SUCCEEDED || $response['status'] == CmnEnum::STATUS_STRIPE_COMPLETE) ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN;
+
         return DB::table(CmnEnum::TABLE_PAYMENT_NAME)
             ->where('provider', CmnEnum::PROVIDER_STRIPE)
             ->where('provider_payment_id', $paymentId)
@@ -170,8 +178,8 @@ trait Paymentable
                 'captured' => $response['captured'],
                 'payment_status' => $response['paid'],
                 'status' => $response['status'],
-                'generic_payment_status' => $response['paid'] ? CmnEnum::PS_PAID : CmnEnum::PS_UNPAID,
-                'generic_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
+                'generic_payment_status' => $genericPaymentStatus,
+                'generic_status' => $genericStatus,
                 'description' => $response['description'],
                 'payment_type' => $response['payment_method_details']['type'] ?? $response['payment_method_types'][CmnEnum::ZERO] ?? null,
                 'card_brand' => $response['payment_method_details']['card']['brand'] ?? null,

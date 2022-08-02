@@ -10,10 +10,10 @@ use RuntimeException;
 
 trait Refundable
 {
-    public function formatRefundInput($options, $paymentId)
+    public function formatRefundInput($options, $capturedId)
     {
         $formatInput = [
-            'payment_id' => $paymentId
+            'captured_id' => $capturedId
         ];
 
         if (isset($options['invoice_id']) && !empty($options['invoice_id'])) {
@@ -33,62 +33,71 @@ trait Refundable
 
     public function formatRefundReponse($response)
     {
+        if(isset($response['error'])) {
+            return ['error' => $response['error']];
+        }
+
         return [
-            'provider' => CmnEnum::PROVIDER_STRIPE,
+            'provider' => CmnEnum::PROVIDER_PAYPAL,
             'id' => $response['id'],
-            'amount' => $this->getPaymentAmount($response['charge']),
-            'amount_refunded' => $response['amount'],
-            'currency' => $response['currency'],
+            'amount' => $this->getPaymentAmountByProviderRefundId($response['id']),
+            'amount_refunded' => $response['amount']['value'] ?? '',
+            'currency' => $response['amount']['currency_code'] ?? '',
             'status' => $response['status'],
-            'generic_refund_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::RS_REFUNDED : CmnEnum::RS_NOT_REFUNDED, 
-            'generic_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
+            'generic_refund_status' => $response['status'] == strtoupper(CmnEnum::STATUS_COMPLETE) ? CmnEnum::RS_REFUNDED : CmnEnum::RS_NOT_REFUNDED, 
+            'generic_status' => $response['status'] == strtoupper(CmnEnum::STATUS_COMPLETE) ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
             'provider_response' => $response
         ];
     }
 
-    public function refundPayment($paymentId, $options = [])
+    public function refundPayment($capturedId, $options = [])
     { 
-        $formatedInput = $this->formatRefundInput($options, $paymentId);
+        $formatedInput = $this->formatRefundInput($options, $capturedId);
         $response = $this->paypal->refundCapturedPayment(
-            $formatedInput['payment_id'],
-            $formatedInput['invoice_id'] ?? 111,
+            $formatedInput['captured_id'],
+            $formatedInput['invoice_id'] ?? '',
             $formatedInput['amount'] ?? null,
             $formatedInput['reason'] ?? null,
-        );
-        dd($response);
-        $this->storeRefundInDatabase($response, $options, $paymentId);
+        );  
+     
+        if(isset($response['status']) && $response['status'] == strtoupper(CmnEnum::STATUS_COMPLETE)) {
+            $response = $this->paypal->showRefundDetails( $response['id'] );
+            $this->storeRefundInDatabase($response, $options, $capturedId);
+        }
+
         return $this->formatRefundReponse($response);
     }
 
     public function retrieveRefund($refundId, $options = [])
     {
-        return $this->formatRefundReponse($this->paypal->showRefundDetails( $refundId ));
+        return $this->formatRefundReponse( $this->paypal->showRefundDetails( $refundId ) );
     } 
 
     private function storeRefundInDatabase($response, $options, $providerPaymentId)
-    { 
+    {  
         if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
             return true;
-        }
+        } 
 
         DB::beginTransaction();
 
         try {
             $paymentId = $this->getPaymentIdByProviderPaymentId($providerPaymentId);
+            $paymentAmount = $this->getPaymentAmountByProviderPaymentId($providerPaymentId);
             $now = now();
 
             DB::table(CmnEnum::TABLE_REFUND_NAME)->insert([
                 //'state' => $options['state'], 
                 'payment_id' => $paymentId,
-                'provider' => CmnEnum::PROVIDER_STRIPE,
+                'provider' => CmnEnum::PROVIDER_PAYPAL,
                 'provider_refund_id' => $response['id'],
                 'user_id' => Auth::user()->id ?? CmnEnum::ONE,
-                'amount' => $this->getPaymentAmount($response['charge']),
-                'amount_refunded' => $response['amount'],
-                'currency' => $response['currency'],
+                'amount' => $paymentAmount,
+                'amount_refunded' => $response['amount']['value'] ?? '',
+                'currency' => $response['amount']['currency_code'],
                 'status' => $response['status'],
-                'generic_refund_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::RS_REFUNDED : CmnEnum::RS_NOT_REFUNDED, 
-                'generic_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
+                'generic_refund_status' => $response['status'] == strtoupper(CmnEnum::STATUS_COMPLETE) ? CmnEnum::RS_REFUNDED : CmnEnum::RS_NOT_REFUNDED, 
+                'generic_status' => $response['status'] == strtoupper(CmnEnum::STATUS_COMPLETE) ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
                 'refund_reason' => $response['reason'] ?? '',
                 'success_json' => json_encode($response),
                 'created_at' => $now,
@@ -108,51 +117,83 @@ trait Refundable
         
     }
 
-    private function updateRefundInDatabase($refundId, $response, $options, $providerPaymentId)
-    { 
-        if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
-            return true;
-        }
+    // private function updateRefundInDatabase($refundId, $response, $options, $providerPaymentId)
+    // { 
+    //     if (! (config('payments.store.in-database') === CmnEnum::STORE_IN_DB_AUTOMATIC)) {
+    //         return true;
+    //     }
 
-        DB::beginTransaction();
+    //     DB::beginTransaction();
 
-        try {
-            $paymentId = $this->getPaymentIdByProviderPaymentId($providerPaymentId);
-            $now = now();
+    //     try {
+    //         $paymentId = $this->getPaymentIdByProviderPaymentId($providerPaymentId);
+    //         $paymentAmount = $this->getPaymentAmountByProviderPaymentId($providerPaymentId);
+    //         $now = now();
 
-            DB::table(CmnEnum::TABLE_REFUND_NAME)
-                ->where('provider', CmnEnum::PROVIDER_PAYPAL)
-                ->where('provider_refund_id', $refundId)
-                ->update([ 
-                    'user_id' => Auth::user()->id ?? CmnEnum::ONE,
-                    'amount' => $this->getPaymentAmount($response['charge']),
-                    'amount_refunded' => $response['amount'],
-                    'currency' => $response['currency'],
-                    'status' => $response['status'],
-                    'generic_refund_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::RS_REFUNDED : CmnEnum::RS_NOT_REFUNDED, 
-                    'generic_status' => $response['status'] == CmnEnum::STATUS_SUCCEEDED ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
-                    'refund_reason' => $response['reason'] ?? '',
-                    'success_json' => json_encode($response), 
-                    'updated_at' => $now
-                ]);
+    //         DB::table(CmnEnum::TABLE_REFUND_NAME)
+    //             ->where('provider', CmnEnum::PROVIDER_PAYPAL)
+    //             ->where('provider_refund_id', $refundId)
+    //             ->update([ 
+    //                 'user_id' => Auth::user()->id ?? CmnEnum::ONE,
+    //                 'amount' => $paymentAmount,
+    //                 'amount_refunded' => $response['amount']['value'] ?? '',
+    //                 'currency' => $response['amount']['currency_code'],
+    //                 'status' => $response['status'],
+    //                 'generic_refund_status' => $response['status'] == strtoupper(CmnEnum::STATUS_COMPLETE) ? CmnEnum::RS_REFUNDED : CmnEnum::RS_NOT_REFUNDED, 
+    //                 'generic_status' => $response['status'] == strtoupper(CmnEnum::STATUS_COMPLETE) ? CmnEnum::STATUS_COMPLETE : CmnEnum::STATUS_OPEN,
+    //                 'refund_reason' => $response['reason'] ?? '',
+    //                 'success_json' => json_encode($response), 
+    //                 'updated_at' => $now
+    //             ]);
 
-            DB::table(CmnEnum::TABLE_PAYMENT_NAME)->where('id', $paymentId)->update([
-                'refunded_at' => $now
-            ]);
+    //         DB::table(CmnEnum::TABLE_PAYMENT_NAME)->where('id', $paymentId)->update([
+    //             'refunded_at' => $now
+    //         ]);
 
-            DB::commit();
-            return true;
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw new RuntimeException($e->getMessage()); 
-        }
+    //         DB::commit();
+    //         return true;
+    //     } catch (Exception $e) {
+    //         DB::rollBack();
+    //         throw new RuntimeException($e->getMessage()); 
+    //     }
         
-    }
+    // }
 
     private function getPaymentIdByProviderPaymentId($id)
     {
         return optional(
-            DB::table(CmnEnum::TABLE_PAYMENT_NAME)->where('provider_payment_id', $id)->orWhere('provider_payment_intent_id', $id)->first(['id'])
+            DB::table(CmnEnum::TABLE_PAYMENT_NAME)
+            ->where(function($q) use ($id) {
+                $q->where('provider_payment_id', $id)
+                ->orWhere('provider_payment_intent_id', $id)
+                ->orWhere('provider_captured_id', $id)
+                ->orWhere('provider_authorized_captured_id', $id);
+            })
+            ->first(['id'])
         )->id;
     }
+
+    private function getPaymentAmountByProviderPaymentId($id)
+    {
+        return optional(
+            DB::table(CmnEnum::TABLE_PAYMENT_NAME)
+            ->where(function($q) use ($id) {
+                $q->where('provider_payment_id', $id)
+                ->orWhere('provider_payment_intent_id', $id)
+                ->orWhere('provider_captured_id', $id)
+                ->orWhere('provider_authorized_captured_id', $id);
+            })
+            ->first(['amount'])
+        )->amount;
+    }
+
+    private function getPaymentAmountByProviderRefundId($id)
+    {
+        return optional(
+            DB::table(CmnEnum::TABLE_REFUND_NAME) 
+            ->where('provider_refund_id', $id)
+            ->first(['amount'])
+        )->amount;
+    }
+
 }

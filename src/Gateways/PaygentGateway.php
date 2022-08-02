@@ -3,17 +3,17 @@
 namespace Bjit\Payment\Gateways;
 
 use Bjit\Payment\Gateways\Interfaces\GatewayInterface;
-use Bjit\Payment\Traits\Paypay\Checkoutable;
-use Bjit\Payment\Traits\Paypay\Paymentable;
-use Bjit\Payment\Traits\Paypay\Refundable; 
-use Illuminate\Http\Request; 
-use PayPay\OpenPaymentAPI\Client; 
+use Bjit\Payment\Traits\Paygent\Checkoutable;
+use Bjit\Payment\Traits\Paygent\LinkPaymentable;
+use Bjit\Payment\Traits\Paygent\Paymentable;
+use Bjit\Payment\Traits\Paygent\Refundable; 
+use Illuminate\Http\Request;  
 
-class PaypayGateway extends AbstractGateway implements GatewayInterface
+class PaygentGateway extends AbstractGateway implements GatewayInterface
 {
+    use LinkPaymentable;
     use Paymentable;
-    use Refundable;
-    use Checkoutable;
+    use Refundable; 
 
     /**
      * The scopes being requested.
@@ -21,7 +21,7 @@ class PaypayGateway extends AbstractGateway implements GatewayInterface
      * @var object
      */ 
 
-    private $paypay; 
+    private $paygent; 
 
     public function __construct(Request $request, $key, $secret, $additionalConfig = [], $guzzle = [])
     { 
@@ -32,11 +32,7 @@ class PaypayGateway extends AbstractGateway implements GatewayInterface
 
     private function setConfig($key, $secret, $additionalConfig)
     { 
-        $this->paypay = new Client([
-            'API_KEY' => $key,
-            'API_SECRET'=> $secret,
-            'MERCHANT_ID'=> $additionalConfig['merchant_id']
-        ], $additionalConfig['is_live'] ); 
+        $this->paygent = null; 
     } 
  
 }

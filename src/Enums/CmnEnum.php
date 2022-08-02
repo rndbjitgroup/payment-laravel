@@ -39,12 +39,16 @@ abstract class CmnEnum
     const STATUS_PAYPAY_CREATED = 'CREATED';
     const STATUS_PAYPAY_CODE = 'SUCCESS';
 
+    const STATUS_STRIPE_COMPLETE = 'complete';
+
     const PROVIDER_STRIPE = 'stripe';
     const PROVIDER_PAYJP = 'payjp';
     const PROVIDER_PAYPAY = 'paypay';
     const PROVIDER_PAYPAL = 'paypal';
+    const PROVIDER_PAYGENT = 'paygent';
 
     const STRIPE_PAYMENT_INTENT_PREFIX = 'pi_';
+    const DEFAULT_STRIPE_PAYMENT_MODE = 'payment';
     const REFUND_STRIPE_REASONS = ['duplicate', 'fraudulent', 'requested_by_customer'];
 
     const STORE_IN_DB_AUTOMATIC = 'automatic';
@@ -52,5 +56,9 @@ abstract class CmnEnum
 
     const PAYPAY_ORDER_TYPE = 'ORDER_QR';
     const PAYPAY_REDIRECT_TYPE_WEB_LINK = 'WEB_LINK';
+
+    const PAYGENT_PAYMENT_TERM_MIN = 30;
+    const PAYGENT_PAYMENT_CLASS = 0;
+    const PAYGENT_USE_CARD_CONF_NUMBER = 1;
     
 }
