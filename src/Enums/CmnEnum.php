@@ -30,22 +30,30 @@ abstract class CmnEnum
     const PS_UNPAID = 'unpaid';
     const RS_REFUNDED = 'refunded'; // PS => REFUND STATUS 
     const RS_NOT_REFUNDED = 'not-refunded';
+    
 
     const STATUS_SUCCEEDED = 'succeeded'; 
     const STATUS_COMPLETE = 'completed';
     const STATUS_OPEN = 'open';
     const STATUS_PENDING = 'pending';
+    const STATUS_CAPTURED = 'captured';
     const STATUS_PAYPAL_COMPLETED = 'COMPLETED';
     const STATUS_PAYPAY_CREATED = 'CREATED';
     const STATUS_PAYPAY_CODE = 'SUCCESS';
 
+
     const STATUS_STRIPE_COMPLETE = 'complete';
 
+    const DEFAULT_PAYMENT_MODE = 'sandbox';
     const PROVIDER_STRIPE = 'stripe';
     const PROVIDER_PAYJP = 'payjp';
     const PROVIDER_PAYPAY = 'paypay';
     const PROVIDER_PAYPAL = 'paypal';
     const PROVIDER_PAYGENT = 'paygent';
+    const PROVIDER_SQUAREUP = 'squareup';
+    const PROVIDER_TWO_CHECKOUT = 'two_checkout';
+
+    const CAPTURE_METHOD_AUTOMATIC = 'automatic';
 
     const STRIPE_PAYMENT_INTENT_PREFIX = 'pi_';
     const DEFAULT_STRIPE_PAYMENT_MODE = 'payment';
@@ -60,5 +68,7 @@ abstract class CmnEnum
     const PAYGENT_PAYMENT_TERM_MIN = 30;
     const PAYGENT_PAYMENT_CLASS = 0;
     const PAYGENT_USE_CARD_CONF_NUMBER = 1;
+
+    const SQUAREUP_LINE_ITEM_TAX_TYPE_INCLUSIVE = 'INCLUSIVE';
     
 }
