@@ -73,6 +73,17 @@ return [
         'crt' => env('PAYGENT_CRT', ''),
         'telegram_version' => env('PAYGENT_TELEGRAM_VERSION', '1.0'),
         'base_url' => env('PAYGENT_BASE_URL', 'https://sandbox.paygent.co.jp/v/u/request')
+    ],
+
+    'squareup' => [
+        'key' => env('SQUAREUP_KEY'),
+        'secret' => env('SQUAREUP_SECRET'),
+        'is_live' => env('SQUAREUP_IS_LIVE')
+    ],
+
+    'two_checkout' => [
+        'merchant_id' => env('TWO_MERCHANT_ID', ''),
+        'key' => env('TWO_CHECKOUT_KEY', ''),
     ]
 
 ];

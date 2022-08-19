@@ -7,6 +7,7 @@ use Bjit\Payment\Gateways\PayjpGateway;
 use Bjit\Payment\Gateways\PaypalGateway;
 use Bjit\Payment\Gateways\PaypayGateway;
 use Bjit\Payment\Gateways\StripeGateway;
+use Bjit\Payment\Gateways\SquareupGateway;
 use Illuminate\Support\Arr;
 use Bjit\Payment\Manager;
 use Illuminate\Support\Str;
@@ -92,6 +93,35 @@ class PaymentManager extends Manager implements Contracts\Factory
         
         return $this->buildGateway(
             PaygentGateway::class, $config
+        );
+    }
+
+    /**
+     * Create an instance of the specified gateway.
+     *
+     * @return \Bjit\Payment\Gateways\AbstractGateway
+     */
+    protected function createSquareupGateway()
+    {
+        $config = $this->config->get('payments.squareup');
+        
+        return $this->buildGateway(
+            SquareupGateway::class, $config
+        );
+    }
+
+
+    /**
+     * Create an instance of the specified gateway.
+     *
+     * @return \Bjit\Payment\Gateways\AbstractGateway
+     */
+    protected function createTwoCheckoutGateway()
+    {
+        $config = $this->config->get('payments.two_checkout');
+        
+        return $this->buildGateway(
+            TwoCheckoutGateway::class, $config
         );
     }
    

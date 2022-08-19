@@ -20,6 +20,7 @@ class CreatePsPaymentsTable extends Migration
             $table->string('provider')->nullable();
             $table->string('provider_payment_id'); // stripe/paypal/payjp payment id
             $table->string('provider_payment_intent_id')->nullable(); // stripe/paypal/payjp payment intend id
+            $table->string('provider_payment_idempotency_key')->comment('2nd payment unique key')->nullable();
             $table->bigInteger('user_id')->nullable();
             $table->bigInteger('order_id')->nullable();
             $table->double('amount', 8, 2);
